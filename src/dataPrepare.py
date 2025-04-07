@@ -15,7 +15,29 @@ printMetric("Amount of records", len(df))
 # NA ratio is 0.0107%
 printMetric("Ratio of NA values", f"{df.isna().mean().mean() * 100:.4f}%")
 
-# 5
+# Duplicate records is 0
+printMetric("Amount of duplicate records", df.duplicated().sum())
+
+# Timeframe range is from 2014-02-17 07:00 to 2014-06-09 00:00
+df['time'] = pd.to_datetime(df['time'])
+min_time = df['time'].min()
+max_time = df['time'].max()
+printMetric("Minimum time", min_time)
+printMetric("Maximum time", max_time)
+
+# Value mean, min and max
+mean_value = df['value'].mean()
+min_value = df['value'].min()
+max_value = df['value'].max()
+median_value = df['value'].median()
+variance_value = df['value'].var()
+printMetric("Mean value", mean_value)
+printMetric("Minimum value", min_value)
+printMetric("Maximum value", max_value)
+printMetric("Median value", median_value)
+printMetric("Variance value", variance_value)
+
+# Amount of dataset columns is 5
 printMetric("Dataset columns", df.shape[1])
 
 # column =  ['Unnamed: 0', 'id', 'time', 'variable', 'value']
@@ -70,7 +92,7 @@ for j in range(len(value_cols), len(axes)):
     axes[j].axis('off')
 
 plt.tight_layout()
-plt.savefig("image/origin_dist.png", dpi=500)
+plt.savefig("../image/origin_dist.png", dpi=500)
 
 
 # 4. aggregate data by day
