@@ -16,6 +16,19 @@ def trim_outliers(df, lower_percent=0.01, upper_percent=0.99):
         newdf[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
     return newdf
 
+def box_plot(columns, fig_path):
+    df_expand[columns].plot(kind='box', figsize=(8, 5), vert=False, patch_artist=True,
+                                boxprops=dict(facecolor='lightblue', color='gray'),
+                                medianprops=dict(color='red'),
+                                flierprops=dict(marker='o', markerfacecolor='orange', markersize=5, linestyle='none'))
+
+    plt.title("Box Plot")
+    plt.xlabel("Value")
+    plt.grid(True, axis='x', linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig(fig_path, dpi=500)
+    plt.clf()
+
 # 1.read data
 input_data = r"../input/dataset_mood_smartphone.csv"
 df = pd.read_csv(input_data)
@@ -113,6 +126,17 @@ plt.tight_layout()
 plt.savefig("../image/origin_dist.png", dpi=500)
 plt.clf()
 
+# 3.1 Box plot
+columns_to_plot1 = ['activity','circumplex.arousal', 'circumplex.valence','call','sms','mood']
+fig_path1 = "../image/box_plot1.png"
+columns_to_plot2 = ['appCat.builtin', 'appCat.communication','appCat.entertainment', 'appCat.finance', 'appCat.game',\
+                    'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel','appCat.unknown', 'appCat.utilities',\
+                    'appCat.weather', 'screen']
+fig_path2 = "../image/box_plot2.png"
+
+box_plot(columns_to_plot1,fig_path1)
+box_plot(columns_to_plot2,fig_path2)
+
 # 4. aggregate data by day
 df_expand['day'] = df_expand['time'].dt.date
 group_cols = ['id', 'day']
@@ -144,6 +168,12 @@ agg_dict = {
 df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
 df_agg.to_csv('../input/df_agg.csv', index=False)
+
+df_agg = pd.read_csv('../input/df_agg.csv')
+# check missing value percentage
+missing_ratio = df_agg.isna().mean()
+# get value range
+info_stat = df_agg.describe(include="all")
 
 fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
 axes = axes.flatten()
