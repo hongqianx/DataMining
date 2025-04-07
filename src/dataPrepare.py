@@ -2,15 +2,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
+def printMetric(desc, metric):
+    print(desc + " is " + str(metric) + ".")
+
 # 1.read data
-input_data = r"input/dataset_mood_smartphone.csv"
+input_data = r"../input/dataset_mood_smartphone.csv"
 df = pd.read_csv(input_data)
+
 # 376912 records
-len(df)
+printMetric("Amount of records", len(df))
+
+# NA ratio
+printMetric("Ratio of NA values", f"{df.isna().mean().mean() * 100:.4f}%")
+
+# 5
+printMetric("Dataset columns", df.shape[1])
+
 # column =  ['Unnamed: 0', 'id', 'time', 'variable', 'value']
 df.columns.tolist()
+
 # 27 unique users
-df["id"].nunique()
+printMetric("Amount of unique users", df["id"].nunique())
 
 # 2. create df_expand
 # ISO datetime formate
@@ -19,7 +31,7 @@ df['time'] = pd.to_datetime(df['time'])
 # change 'variables' into columns, and 'value' are the value of columns
 df_tmp = df.pivot(columns='variable', values='value')
 df_expand = pd.concat([df[['id', 'time']].reset_index(drop=True), df_tmp.reset_index(drop=True)], axis=1)
-df_expand.to_csv('input/df_expand.csv', index=False)
+df_expand.to_csv('../input/df_expand.csv', index=False)
 
 # get info
 # info: 21 columns, # non-null count, datatype
@@ -92,3 +104,4 @@ agg_dict = {
 df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
 df_agg.to_csv('input/df_agg.csv', index=False)
+
