@@ -5,6 +5,17 @@ import math
 def printMetric(desc, metric):
     print(desc + " is " + str(metric) + ".")
 
+def trim_outliers(df, lower_percent=0.01, upper_percent=0.99):
+    numeric_cols = df.select_dtypes(include='number').columns
+    newdf = pd.DataFrame()
+    for col in numeric_cols:
+        lower_bound = df[col].quantile(lower_percent)
+        print(f"Lower bound for {col}: {lower_bound}")
+        upper_bound = df[col].quantile(upper_percent)
+        print(f"Upper bound for {col}: {upper_bound}")
+        newdf[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
+    return newdf
+
 # 1.read data
 input_data = r"../input/dataset_mood_smartphone.csv"
 df = pd.read_csv(input_data)
@@ -75,6 +86,8 @@ info_uni = df_expand.nunique()
 # select numerical columns
 value_cols = df_expand.select_dtypes(include='number').columns
 
+trimmed_df = trim_outliers(df_expand)
+
 # set image layout
 num_vars = len(value_cols)
 cols = 5  # images per column
@@ -90,6 +103,7 @@ for i, col in enumerate(value_cols):
     axes[i].set_title(f'Distribution of {col}')
     axes[i].set_xlabel(col)
     axes[i].set_ylabel('Frequency')
+    axes[i].set_yscale('log')
 
 # hide empty image
 for j in range(len(value_cols), len(axes)):
@@ -97,7 +111,7 @@ for j in range(len(value_cols), len(axes)):
 
 plt.tight_layout()
 plt.savefig("../image/origin_dist.png", dpi=500)
-
+plt.clf()
 
 # 4. aggregate data by day
 df_expand['day'] = df_expand['time'].dt.date
@@ -131,3 +145,22 @@ df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
 df_agg.to_csv('../input/df_agg.csv', index=False)
 
+fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
+axes = axes.flatten()
+
+# for each col
+for i, col in enumerate(value_cols):
+    print(trimmed_df[col])
+    axes[i].hist(trimmed_df[col].dropna(), bins=10, color='skyblue', edgecolor='black')
+    axes[i].set_title(f'Distribution of trimmed {col}')
+    axes[i].set_xlabel(col)
+    axes[i].set_ylabel('Frequency')
+    #axes[i].set_yscale('log')  # log scale for better visibility
+
+# hide empty image
+for j in range(len(value_cols), len(axes)):
+    axes[j].axis('off')
+
+plt.tight_layout()
+plt.savefig("../image/trimmed_dist.png", dpi=500)
+plt.clf()
