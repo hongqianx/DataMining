@@ -12,7 +12,7 @@ df = pd.read_csv(input_data)
 # 376912 records
 printMetric("Amount of records", len(df))
 
-# NA ratio
+# NA ratio is 0.0107%
 printMetric("Ratio of NA values", f"{df.isna().mean().mean() * 100:.4f}%")
 
 # 5
