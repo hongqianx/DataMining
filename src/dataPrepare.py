@@ -46,6 +46,10 @@ df.columns.tolist()
 # 27 unique users
 printMetric("Amount of unique users", df["id"].nunique())
 
+# Time value correlation
+df_with_epoch = df.assign(epoch_time=(pd.to_datetime(df['time']) - pd.Timestamp('1970-01-01')) / pd.Timedelta('1s'))
+print(df_with_epoch['value'].corr(df_with_epoch['epoch_time']))
+
 # 2. create df_expand
 # ISO datetime formate
 df['time'] = pd.to_datetime(df['time'])
@@ -125,5 +129,5 @@ agg_dict = {
 # aggregate data by id and day
 df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
-df_agg.to_csv('input/df_agg.csv', index=False)
+df_agg.to_csv('../input/df_agg.csv', index=False)
 
