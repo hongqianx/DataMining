@@ -16,6 +16,9 @@ def trim_outliers(df, lower_percent=0.01, upper_percent=0.99):
         newdf[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
     return newdf
 
+
+
+# draw one box plot for multiple columns
 def box_plot(columns, fig_path):
     df_expand[columns].plot(kind='box', figsize=(8, 5), vert=False, patch_artist=True,
                                 boxprops=dict(facecolor='lightblue', color='gray'),
@@ -25,6 +28,45 @@ def box_plot(columns, fig_path):
     plt.title("Box Plot")
     plt.xlabel("Value")
     plt.grid(True, axis='x', linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig(fig_path, dpi=500)
+    plt.clf()
+
+# draw single histogram for column
+def hist_plot(column, fig_path):
+    plt.figure(figsize=(8, 5))
+    plt.hist(column.dropna(), bins=30, color='skyblue', edgecolor='black')
+    plt.title('Histogram of your_column_name')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(fig_path, dpi=300)
+    plt.clf()
+
+# draw multiple histogram for columns
+def multi_hist_plot(columns, fig_path, data):
+    # set image layout
+    num_vars = len(columns)
+    cols = 5  # images per column
+    rows = math.ceil(num_vars / cols)
+
+    # create canvas
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
+    axes = axes.flatten()
+
+    # for each col
+    for i, col in enumerate(columns):
+        axes[i].hist(data[col].dropna(), bins=10, color='skyblue', edgecolor='black')
+        axes[i].set_title(f'Distribution of {col}')
+        axes[i].set_xlabel(col)
+        axes[i].set_ylabel('Frequency')
+        # axes[i].set_yscale('log') # log scale for better visibility
+
+    # hide empty image
+    for j in range(len(columns), len(axes)):
+        axes[j].axis('off')
+
     plt.tight_layout()
     plt.savefig(fig_path, dpi=500)
     plt.clf()
@@ -96,35 +138,15 @@ print(df_expand.isnull().sum())
 info_uni = df_expand.nunique()
 
 # 3. image distribution for all columns
+hist_plot(column = df_expand['mood'], fig_path = "../image/mood.png")
+hist_plot(column = df_expand['activity'], fig_path = "../image/activity.png")
+
 # select numerical columns
 value_cols = df_expand.select_dtypes(include='number').columns
 
 trimmed_df = trim_outliers(df_expand)
 
-# set image layout
-num_vars = len(value_cols)
-cols = 5  # images per column
-rows = math.ceil(num_vars / cols)
-
-# create canvas
-fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
-axes = axes.flatten()
-
-# for each col
-for i, col in enumerate(value_cols):
-    axes[i].hist(df_expand[col].dropna(), bins=10, color='skyblue', edgecolor='black')
-    axes[i].set_title(f'Distribution of {col}')
-    axes[i].set_xlabel(col)
-    axes[i].set_ylabel('Frequency')
-    axes[i].set_yscale('log')
-
-# hide empty image
-for j in range(len(value_cols), len(axes)):
-    axes[j].axis('off')
-
-plt.tight_layout()
-plt.savefig("../image/origin_dist.png", dpi=500)
-plt.clf()
+multi_hist_plot(columns=value_cols, fig_path="../image/trimmed_dist.png",data=trimmed_df )
 
 # 3.1 Box plot
 columns_to_plot1 = ['activity','circumplex.arousal', 'circumplex.valence','call','sms','mood']
@@ -175,22 +197,3 @@ missing_ratio = df_agg.isna().mean()
 # get value range
 info_stat = df_agg.describe(include="all")
 
-fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
-axes = axes.flatten()
-
-# for each col
-for i, col in enumerate(value_cols):
-    print(trimmed_df[col])
-    axes[i].hist(trimmed_df[col].dropna(), bins=10, color='skyblue', edgecolor='black')
-    axes[i].set_title(f'Distribution of trimmed {col}')
-    axes[i].set_xlabel(col)
-    axes[i].set_ylabel('Frequency')
-    #axes[i].set_yscale('log')  # log scale for better visibility
-
-# hide empty image
-for j in range(len(value_cols), len(axes)):
-    axes[j].axis('off')
-
-plt.tight_layout()
-plt.savefig("../image/trimmed_dist.png", dpi=500)
-plt.clf()
