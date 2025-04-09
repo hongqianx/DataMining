@@ -160,8 +160,10 @@ box_plot(columns_to_plot1,fig_path1)
 box_plot(columns_to_plot2,fig_path2)
 
 # 4. aggregate data by day
+print(df_expand['time'].head())
 df_expand['day'] = df_expand['time'].dt.date
-group_cols = ['id', 'day']
+df_expand['hour'] = df_expand['time'].dt.hour
+group_cols = ['id', 'day', 'hour']
 
 # define aggregate function
 agg_dict = {
@@ -189,9 +191,9 @@ agg_dict = {
 # aggregate data by id and day
 df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
-df_agg.to_csv('../input/df_agg.csv', index=False)
+df_agg.to_csv('../input/df_agg_hour.csv', index=False)
 
-df_agg = pd.read_csv('../input/df_agg.csv')
+df_agg = pd.read_csv('../input/df_agg_hour.csv')
 # check missing value percentage
 missing_ratio = df_agg.isna().mean()
 # get value range
