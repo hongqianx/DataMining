@@ -36,7 +36,8 @@ df_expand.to_csv('../input/df_expand.csv', index=False)
 trimmed_df = trim_outliers(df_expand)
 
 # 1C
-df_agg = pd.read_csv("../input/df_agg_hour.csv")
+df_agg = pd.read_csv("../input/df_agg_6hour.csv")
+print(df_agg["mood"].isna().sum())
 df_fe = df_agg[['id', 'day', 'hour', 'activity', 'mood', 'screen', 'circumplex.arousal', 'circumplex.valence']].copy()
 df_fe["positive_app_time"] = df_agg["appCat.entertainment"] + df_agg["appCat.game"] + df_agg["appCat.travel"] + df_agg["appCat.social"]
 df_fe["neutral_app_time"] = df_agg["appCat.builtin"] + df_agg["appCat.communication"] + df_agg["appCat.finance"] + df_agg["appCat.other"] + df_agg["appCat.unknown"] + df_agg["appCat.utilities"] + df_agg["appCat.weather"]
