@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.neural_network import MLPClassifier
 
 # Import our data
 input_data = r"../input/dataset_mood_smartphone.csv"
@@ -34,3 +35,11 @@ df_expand = pd.concat([df[['id', 'time']].reset_index(drop=True), df_tmp.reset_i
 df_expand.to_csv('../input/df_expand.csv', index=False)
 
 trimmed_df = trim_outliers(df_expand)
+
+
+
+# ATTEMPT
+# Neural networks have many options
+# Works well for complex data.
+#
+
