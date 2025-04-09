@@ -37,8 +37,22 @@ trimmed_df = trim_outliers(df_expand)
 
 # 1C
 df_agg = pd.read_csv("../input/df_agg_6hour.csv")
+
+# Impute using linear interpolation
+cols_to_interp = ['circumplex.valence', 'circumplex.arousal', 'activity']
+before_interp = df_agg[cols_to_interp].isna().sum()
+df_agg[cols_to_interp] = df_agg[cols_to_interp].interpolate(method='linear').fillna(method='bfill').round(3)
+after_interp = df_agg[cols_to_interp].isna().sum()
+df_agg.to_csv('../input/test_interp.csv', index=False)
+
+print("Before interpolation:")
+print(before_interp)
+print("\nAfter interpolation:")
+print(after_interp)
+
+
 print(df_agg["mood"].isna().sum())
-df_fe = df_agg[['id', 'day', 'hour', 'activity', 'mood', 'screen', 'circumplex.arousal', 'circumplex.valence']].copy()
+df_fe = df_agg[['id', 'time_bin', 'activity', 'mood', 'screen', 'circumplex.arousal', 'circumplex.valence']].copy()
 df_fe["positive_app_time"] = df_agg["appCat.entertainment"] + df_agg["appCat.game"] + df_agg["appCat.travel"] + df_agg["appCat.social"]
 df_fe["neutral_app_time"] = df_agg["appCat.builtin"] + df_agg["appCat.communication"] + df_agg["appCat.finance"] + df_agg["appCat.other"] + df_agg["appCat.unknown"] + df_agg["appCat.utilities"] + df_agg["appCat.weather"]
 df_fe["negative_app_time"] = df_agg["appCat.office"]
@@ -46,7 +60,8 @@ df_fe["communications"] = df_agg["call"] + df_agg["sms"]
 
 print(df_fe.loc[30:35,:])
 
-df_rolling = df_fe[['id', 'day', 'hour', 'mood']].copy() # we need to find a way to do the below nicer
+df_rolling = df_fe[['id', 'time_bin', 'mood']].copy() # we need to find a way to do the below nicer
 df_rolling[["activity", "screen", "circumplex.arousal", "circumplex.valence", "positive_app_time", "neutral_app_time", "negative_app_time", "communications"]] = df_fe[["activity", "screen", "circumplex.arousal", "circumplex.valence", "positive_app_time", "neutral_app_time", "negative_app_time", "communications"]].rolling(window=5, min_periods=1).mean()
 
 print(df_rolling.loc[30:35,:])
+
