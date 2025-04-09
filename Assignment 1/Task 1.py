@@ -5,18 +5,13 @@ input_data = r"../input/dataset_mood_smartphone.csv"
 df = pd.read_csv(input_data)
 
 # Clean our data
-# Select the 0.1st until 99.9 quantile of our data. (581 lost)
-def trim_outliers(df, lower_percent=0.01, upper_percent=0.99):
-    numeric_cols = df.select_dtypes(include='number').columns
-    newdf = pd.DataFrame()
-    for col in numeric_cols:
-        lower_bound = df[col].quantile(lower_percent)
-        print(f"Lower bound for {col}: {lower_bound}")
-        upper_bound = df[col].quantile(upper_percent)
-        print(f"Upper bound for {col}: {upper_bound}")
-        newdf[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
-    return newdf
-
+# for columns in data, change value <0, and upper 0.99 quantile as NA
+def trim_outliers(data, columns, upper_percent=0.99):
+    df_trim = data.copy()
+    for col in columns:
+        upper_bound = df_trim[col].quantile(upper_percent)
+        df_trim[col] = df_trim[col].where((df_trim[col] >= 0) & (df_trim[col] <= upper_bound), np.nan)
+    return df_trim
 
 df.columns.tolist()
 
@@ -24,7 +19,7 @@ df.columns.tolist()
 df_with_epoch = df.assign(epoch_time=(pd.to_datetime(df['time']) - pd.Timestamp('1970-01-01')) / pd.Timedelta('1s'))
 print(df_with_epoch['value'].corr(df_with_epoch['epoch_time']))
 
-# 2. create df_expand
+# 2. create df_expand, input: df, output: df_expand
 # ISO datetime formate
 df['time'] = pd.to_datetime(df['time'])
 
@@ -33,7 +28,13 @@ df_tmp = df.pivot(columns='variable', values='value')
 df_expand = pd.concat([df[['id', 'time']].reset_index(drop=True), df_tmp.reset_index(drop=True)], axis=1)
 df_expand.to_csv('../input/df_expand.csv', index=False)
 
-trimmed_df = trim_outliers(df_expand)
+# change outliers to NA, input: df_expand, output: df_trim
+outlier_col = ['screen','appCat.builtin','appCat.communication',\
+           'appCat.entertainment', 'appCat.finance', 'appCat.game',\
+           'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',\
+           'appCat.unknown', 'appCat.utilities', 'appCat.weather']
+df_trim = trim_outliers(data = df_expand, columns=outlier_col)
+df_trim.to_csv('../input/df_trim.csv', index=False)
 
 # 1C
 df_agg = pd.read_csv("../input/df_agg_6hour.csv")
