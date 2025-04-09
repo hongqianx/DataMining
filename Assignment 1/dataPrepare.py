@@ -161,9 +161,12 @@ box_plot(columns_to_plot2,fig_path2)
 
 # 4. aggregate data by day
 print(df_expand['time'].head())
-df_expand['day'] = df_expand['time'].dt.date
-df_expand['hour'] = df_expand['time'].dt.hour
-group_cols = ['id', 'day', 'hour']
+# df_expand['day'] = df_expand['time'].dt.date
+# df_expand['hour'] = df_expand['time'].dt.hour
+# group_cols = ['id', 'day', 'hour']
+
+df_expand['time_bin'] = df_expand['time'].dt.floor(f'{6}H')
+group_cols = ['id', 'time_bin']
 
 # define aggregate function
 agg_dict = {
@@ -191,7 +194,7 @@ agg_dict = {
 # aggregate data by id and day
 df_agg = df_expand.groupby(group_cols).agg(agg_dict).reset_index()
 
-df_agg.to_csv('../input/df_agg_hour.csv', index=False)
+df_agg.to_csv('../input/df_agg_6hour.csv', index=False)
 
 df_agg = pd.read_csv('../input/df_agg_hour.csv')
 # check missing value percentage
