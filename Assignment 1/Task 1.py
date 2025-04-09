@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.neural_network import MLPClassifier
 
 # Import our data
 input_data = r"../input/dataset_mood_smartphone.csv"
@@ -36,10 +35,17 @@ df_expand.to_csv('../input/df_expand.csv', index=False)
 
 trimmed_df = trim_outliers(df_expand)
 
+# 1C
+df_agg = pd.read_csv("../input/df_agg.csv")
+df_fe = df_agg[['id', 'day', 'activity', 'mood', 'screen', 'circumplex.arousal', 'circumplex.valence']].copy()
+df_fe["positive_app_time"] = df_agg["appCat.entertainment"] + df_agg["appCat.game"] + df_agg["appCat.travel"] + df_agg["appCat.social"]
+df_fe["neutral_app_time"] = df_agg["appCat.builtin"] + df_agg["appCat.communication"] + df_agg["appCat.finance"] + df_agg["appCat.other"] + df_agg["appCat.unknown"] + df_agg["appCat.utilities"] + df_agg["appCat.weather"]
+df_fe["negative_app_time"] = df_agg["appCat.office"]
+df_fe["communications"] = df_agg["call"] + df_agg["sms"]
 
+print(df_fe.loc[30:35,:])
 
-# ATTEMPT
-# Neural networks have many options
-# Works well for complex data.
-#
+df_rolling = df_fe[['id', 'day', 'mood']].copy() # we need to find a way to do the below nicer
+df_rolling[["activity", "screen", "circumplex.arousal", "circumplex.valence", "positive_app_time", "neutral_app_time", "negative_app_time", "communications"]] = df_fe[["activity", "screen", "circumplex.arousal", "circumplex.valence", "positive_app_time", "neutral_app_time", "negative_app_time", "communications"]].rolling(window=5, min_periods=1).mean()
 
+print(df_rolling.loc[30:35,:])
