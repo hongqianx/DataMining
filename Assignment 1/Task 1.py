@@ -24,6 +24,10 @@ print(df_with_epoch['value'].corr(df_with_epoch['epoch_time']))
 # ISO datetime formate
 df['time'] = pd.to_datetime(df['time'])
 
+#Convert user to numeric tag
+df['id'] = df['id'].astype('category').cat.codes
+df['time_bin'] = df['time'].astype('category').cat.codes
+
 # change 'variables' into columns, and 'value' are the value of columns
 df_tmp = df.pivot(columns='variable', values='value')
 df_expand = pd.concat([df[['id', 'time']].reset_index(drop=True), df_tmp.reset_index(drop=True)], axis=1)
@@ -39,6 +43,8 @@ df_trim.to_csv('../input/df_trim.csv', index=False)
 
 # 1C
 df_agg = pd.read_csv("../input/df_agg_6hour.csv")
+df_agg['id'] = df_agg['id'].astype('category').cat.codes
+df_agg['time_bin'] = df_agg['time_bin'].astype('category').cat.codes
 
 # Impute using linear interpolation
 cols_to_interp = ['circumplex.valence', 'circumplex.arousal', 'activity']
@@ -51,7 +57,6 @@ print("Before interpolation:")
 print(before_interp)
 print("\nAfter interpolation:")
 print(after_interp)
-
 
 print(df_agg["mood"].isna().sum())
 df_fe = df_agg[['id', 'time_bin', 'activity', 'mood', 'screen', 'circumplex.arousal', 'circumplex.valence']].copy()
