@@ -69,6 +69,11 @@ def multi_hist_plot(columns, fig_path, data):
     plt.savefig(fig_path, dpi=500)
     plt.clf()
 
+def compare_stat(summary_before, summary_after):
+    comparison = summary_before.T.join(summary_after.T, lsuffix='_before', rsuffix='_after')
+    print(comparison[['mean_before', 'mean_after', 'std_before', 'std_after', 'min_before', 'min_after', 'max_before', 'max_after']])
+    return comparison
+
 # 1.read data
 input_data = r"../input/dataset_mood_smartphone.csv"
 df = pd.read_csv(input_data)
@@ -125,7 +130,7 @@ df_expand.to_csv('../input/df_expand.csv', index=False)
 # info: 21 columns, # non-null count, datatype
 df_expand.info()
 # statistics
-info_stat = df_expand.describe(include="all")
+df_expand_stat = df_expand.describe(include="all")
 
 # Checking missing values
 print(df_expand.isnull().sum())
@@ -173,8 +178,11 @@ outlier_col = ['screen','appCat.builtin','appCat.communication',\
 
 df_trim = trim_outliers(data = df_expand, columns=outlier_col)
 # get value range
-info_stat = df_trim.describe(include="all")
+df_trim_stat = df_trim.describe(include="all")
 df_trim.to_csv('../input/df_trim.csv', index=False)
+
+# compare df_expand vs df_trim
+result = compare_stat(summary_before=df_expand_stat, summary_after=df_trim_stat)
 
 # select numerical columns
 value_cols = df_trim.select_dtypes(include='number').columns
