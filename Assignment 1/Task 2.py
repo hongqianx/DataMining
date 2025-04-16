@@ -20,7 +20,7 @@ logger.setLevel(logging.DEBUG)  # Set the global logging level
 # For now we split it in 0 = low, 1 = neutral, 2 = good, 3 = great
 def split_mood_segments(mood):
     match mood:
-        case mood if mood <= 3:
+        case mood if mood <= 4:
             return 0
         case mood if mood <= 6:
             return 1
@@ -79,12 +79,28 @@ plt.show()
 # Task 2A.Temporal
 
 # Configure GPU transcoding if it is available, otherwise fall back to using just the cpu
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 print(f"Using device: {device}")
 
 # Load the data
 input_data = r"../input/df_interp_6hour.csv"
 df = pd.read_csv(input_data)
+
+# Define function to split our mood in segments
+# For now we split it in 0 = low, 1 = neutral, 2 = good, 3 = great
+def split_mood_segments(mood):
+    match mood:
+        case mood if mood <= 4:
+            return 0
+        case mood if mood <= 6:
+            return 1
+        case mood if mood <= 8:
+            return 2
+        case mood if mood > 8:
+            return 3
+        case _:
+            logger.error(f"Invalid mood value: {mood}")
+            return -1
 
 # Perform scaling and sort data
 scaler = StandardScaler()
@@ -112,10 +128,10 @@ X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, te
 model = Sequential()
 model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
 model.add(Dropout(0.2))  # Dropout for regularization
-model.add(Dense(units=1, activation='linear'))  # Output layer for regression (mood prediction)
+model.add(Dense(units=4, activation='softmax')) # Output layer for classification (4 mood labels)
 
-# Compile model with mean absolute error
-model.compile(optimizer=Adam(), loss='mean_absolute_error', metrics=['mae'])
+# Compile model with cross entropy since we have more than 2 labels
+model.compile(optimizer=Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 # Train model
 model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
@@ -130,6 +146,25 @@ predictions = model.predict(X_test)
 # Evaluate with MAE for predictions
 mae_value = mean_absolute_error(y_test, predictions)
 print(f'Mean Absolute Error: {mae_value}')
+
+
+
+
+
+# Extract one sequence
+X_test_seq = df[feature_cols].values.reshape(1, 6, len(feature_cols))  # shape = (1, 6, features)
+
+# Fake training on a dummy batch so we can predict
+X_dummy = np.tile(X_test_seq, (10, 1, 1))  # 10 dummy sequences
+y_dummy = np.zeros((10,))  # All labeled as class 0 for quick test
+model.fit(X_dummy, y_dummy, epochs=1, verbose=0)
+
+# Predict
+pred = model.predict(X_test_seq)
+predicted_class = np.argmax(pred, axis=1)[0]
+
+print(f"Predicted mood class: {predicted_class}")
+print(f"Class probabilities: {pred}")
 
 
 
