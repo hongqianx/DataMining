@@ -1,48 +1,25 @@
 import numpy as np
 import pandas as pd
+from dataPrepare import DataPrepare
 
-# Import our data
-# input_data = r"../input/dataset_mood_smartphone.csv"
-# df = pd.read_csv(input_data)
+# 1A
+# 1.read data
+input_data = r"../input/dataset_mood_smartphone.csv"
+df = pd.read_csv(input_data)
+data_proc = DataPrepare()
+# ISO datetime formate
+df['time'] = pd.to_datetime(df['time'])
 
-# # Clean our data
-# # for columns in data, change value <0, and upper 0.99 quantile as NA
-# def trim_outliers(data, columns, upper_percent=0.99):
-#     df_trim = data.copy()
-#     for col in columns:
-#         upper_bound = df_trim[col].quantile(upper_percent)
-#         df_trim[col] = df_trim[col].where((df_trim[col] >= 0) & (df_trim[col] <= upper_bound), np.nan)
-#     return df_trim
-#
-# df.columns.tolist()
-#
-# # Time value correlation
-# df_with_epoch = df.assign(epoch_time=(pd.to_datetime(df['time']) - pd.Timestamp('1970-01-01')) / pd.Timedelta('1s'))
-# print(df_with_epoch['value'].corr(df_with_epoch['epoch_time']))
-#
-# # 2. create df_expand, input: df, output: df_expand
-# # ISO datetime formate
-# df['time'] = pd.to_datetime(df['time'])
-#
-# #Convert user to numeric tag
-# df['id'] = df['id'].astype('category').cat.codes
-# df['time_bin'] = df['time'].astype('category').cat.codes
-#
-# # change 'variables' into columns, and 'value' are the value of columns
-# df_tmp = df.pivot(columns='variable', values='value')
-# df_expand = pd.concat([df[['id', 'time']].reset_index(drop=True), df_tmp.reset_index(drop=True)], axis=1)
-# df_expand.to_csv('../input/df_expand.csv', index=False)
-#
-# # change outliers to NA, input: df_expand, output: df_trim
-# outlier_col = ['screen','appCat.builtin','appCat.communication',\
-#            'appCat.entertainment', 'appCat.finance', 'appCat.game',\
-#            'appCat.office', 'appCat.other', 'appCat.social', 'appCat.travel',\
-#            'appCat.unknown', 'appCat.utilities', 'appCat.weather']
-# df_trim = trim_outliers(data = df_expand, columns=outlier_col)
-# df_trim.to_csv('../input/df_trim.csv', index=False)
+# change 'variables' into columns, and 'value' are the value of columns
+df_expand = data_proc.data_pivot(data=df)
+
+# 1B
+# process outliers
+df_trim = data_proc.outlier_process(data=df_expand)
+# aggregate data
+df_agg = data_proc.data_aggregate(data=df_trim)
 
 # 1C
-df_agg = pd.read_csv("../input/df_agg_6hour.csv")
 df_agg['id'] = df_agg['id'].astype('category').cat.codes
 df_agg['time_bin'] = df_agg['time_bin'].astype('category').cat.codes
 
