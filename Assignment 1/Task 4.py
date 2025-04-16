@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
@@ -15,6 +16,8 @@ import logging
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
 logger.setLevel(logging.DEBUG)  # Set the global logging level
+
+tf.config.set_visible_devices([], 'GPU')
 
 # Setting up reusable template variables
 prediction_col = 'mood'
@@ -87,56 +90,56 @@ plt.show()
 # Task 4.Temporal
 
 # Configure GPU transcoding if it is available, otherwise fall back to using just the cpu
-device = torch.device("cpu")
-print(f"Using device: {device}")
+# device = torch.device("cpu")
+# print(f"Using device: {device}")
+with tf.device("/CPU:0"):
+    # Load the data
+    input_data = r"../input/df_interp_6hour.csv"
+    df = pd.read_csv(input_data)
 
-# Load the data
-input_data = r"../input/df_interp_6hour.csv"
-df = pd.read_csv(input_data)
+    # Perform scaling and sort data
+    scaler = StandardScaler()
+    df[feature_cols] = scaler.fit_transform(df[feature_cols])
+    df = df.sort_values(by=['id', 'time_bin']) # Scale by first user then time
 
-# Perform scaling and sort data
-scaler = StandardScaler()
-df[feature_cols] = scaler.fit_transform(df[feature_cols])
-df = df.sort_values(by=['id', 'time_bin']) # Scale by first user then time
+    # LSTM expects sequences, declare the amount
+    seq_length = 6  # (sequence length)
+    X_sequences = []
+    y_sequences = []
 
-# LSTM expects sequences, declare the amount
-seq_length = 6  # (sequence length)
-X_sequences = []
-y_sequences = []
+    # Create sequences
+    for i in range(seq_length, len(df)):
+        X_sequences.append(df[feature_cols].iloc[i-seq_length:i].values)  # Collect features for the sequence
+        y_sequences.append(df['mood'].iloc[i])
 
-# Create sequences
-for i in range(seq_length, len(df)):
-    X_sequences.append(df[feature_cols].iloc[i-seq_length:i].values)  # Collect features for the sequence
-    y_sequences.append(df['mood'].iloc[i])
+    X_sequences = np.array(X_sequences)
+    y_sequences = np.array(y_sequences)
 
-X_sequences = np.array(X_sequences)
-y_sequences = np.array(y_sequences)
+    # Split data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
 
-# Split data into training and test sets
-X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
+    # Define LSTM model
+    model = Sequential()
+    model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
+    model.add(Dropout(0.2))  # Dropout for regularization
+    model.add(Dense(units=1, activation='linear'))  # Output layer for regression (mood prediction)
 
-# Define LSTM model
-model = Sequential()
-model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
-model.add(Dropout(0.2))  # Dropout for regularization
-model.add(Dense(units=1, activation='linear'))  # Output layer for regression (mood prediction)
+    # Compile model with mean absolute error
+    model.compile(optimizer=Adam(), loss='mean_absolute_error', metrics=['mae'])
 
-# Compile model with mean absolute error
-model.compile(optimizer=Adam(), loss='mean_absolute_error', metrics=['mae'])
+    # Train model
+    model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
 
-# Train model
-model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+    # Evaluate model
+    loss, mae = model.evaluate(X_test, y_test)
+    print(f'Test Loss: {loss}, Test MAE: {mae}')
 
-# Evaluate model
-loss, mae = model.evaluate(X_test, y_test)
-print(f'Test Loss: {loss}, Test MAE: {mae}')
+    # Make predictions
+    predictions = model.predict(X_test)
 
-# Make predictions
-predictions = model.predict(X_test)
-
-# Evaluate with MAE for predictions
-mae_value = mean_absolute_error(y_test, predictions)
-print(f'Mean Absolute Error: {mae_value}')
+    # Evaluate with MAE for predictions
+    mae_value = mean_absolute_error(y_test, predictions)
+    print(f'Mean Absolute Error: {mae_value}')
 
 
 

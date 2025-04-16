@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
@@ -79,8 +80,10 @@ plt.show()
 # Task 2A.Temporal
 
 # Configure GPU transcoding if it is available, otherwise fall back to using just the cpu
-device = torch.device("cpu")
-print(f"Using device: {device}")
+# device = torch.device("cpu")
+# print(f"Using device: {device}")
+
+tf.config.set_visible_devices([], 'GPU')
 
 # Load the data
 input_data = r"../input/df_interp_6hour.csv"
