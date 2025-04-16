@@ -22,11 +22,11 @@ class DataPrepare:
         max_value = data[column].max()
         median_value = data[column].median()
         variance_value = data[column].var()
-        printMetric("Mean value", mean_value)
-        printMetric("Minimum value", min_value)
-        printMetric("Maximum value", max_value)
-        printMetric("Median value", median_value)
-        printMetric("Variance value", variance_value)
+        self.printMetric("Mean value", mean_value)
+        self.printMetric("Minimum value", min_value)
+        self.printMetric("Maximum value", max_value)
+        self.printMetric("Median value", median_value)
+        self.printMetric("Variance value", variance_value)
 
 
     # draw one box plot for multiple columns
