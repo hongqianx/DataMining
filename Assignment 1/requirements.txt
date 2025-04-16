@@ -3,3 +3,4 @@ statsmodels
 matplotlib
 torch
 tensorflow
+scikit-learn

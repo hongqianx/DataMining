@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +15,22 @@ import logging
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
 logger.setLevel(logging.DEBUG)  # Set the global logging level
+
+# Define function to split our mood in segments
+# For now we split it in 0 = low, 1 = neutral, 2 = good, 3 = great
+def split_mood_segments(mood):
+    match mood:
+        case mood if mood <= 3:
+            return 0
+        case mood if mood <= 6:
+            return 1
+        case mood if mood <= 8:
+            return 2
+        case mood if mood > 8:
+            return 3
+        case _:
+            logger.error(f"Invalid mood value: {mood}")
+            return -1
 
 # Setting up reusable template variables
 prediction_col = 'mood'
@@ -34,7 +50,7 @@ df = pd.read_csv(input_data)
 
 # Define features and target
 X = df.drop(columns=[prediction_col])
-y = df[prediction_col]
+y = df[prediction_col].apply(lambda x: split_mood_segments(x))
 
 # Handle missing values
 X = X.fillna(0)
@@ -44,7 +60,7 @@ y = y.fillna(y.mean())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train Random Forest
-model = RandomForestRegressor(n_estimators=100, random_state=42)
+model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
 # Evaluate the model
@@ -69,22 +85,6 @@ print(f"Using device: {device}")
 # Load the data
 input_data = r"../input/df_interp_6hour.csv"
 df = pd.read_csv(input_data)
-
-# Define function to split our mood in segments
-# For now we split it in 0 = low, 1 = neutral, 2 = good, 3 = great
-def split_mood_segments(mood):
-    match mood:
-        case mood if mood <= 3:
-            return 0
-        case mood if mood <= 6:
-            return 1
-        case mood if mood <= 8:
-            return 2
-        case mood if mood > 8:
-            return 3
-        case _:
-            logger.error(f"Invalid mood value: {mood}")
-            return -1
 
 # Perform scaling and sort data
 scaler = StandardScaler()
