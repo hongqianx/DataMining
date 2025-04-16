@@ -56,7 +56,7 @@ data_sample = {
 # Task 4
 
 # Load the data
-input_data = r"../input/df_interp_6hour.csv"
+input_data = r"../input/df_rolling.csv"
 df = pd.read_csv(input_data)
 
 # Define features and target

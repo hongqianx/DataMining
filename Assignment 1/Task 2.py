@@ -46,7 +46,7 @@ feature_cols = [
 # Task 2A
 
 # Load the data
-input_data = r"../input/df_interp_6hour.csv"
+input_data = r"../input/df_rolling.csv"
 df = pd.read_csv(input_data)
 
 # Define features and target
@@ -147,8 +147,8 @@ print(f'Test Loss: {loss}, Test MAE: {mae}')
 predictions = model.predict(X_test)
 
 # Evaluate with MAE for predictions
-mae_value = mean_absolute_error(y_test, predictions)
-print(f'Mean Absolute Error: {mae_value}')
+# mae_value = mean_absolute_error(y_test, predictions)
+# print(f'Mean Absolute Error: {mae_value}')
 
 
 
