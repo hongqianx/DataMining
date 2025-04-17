@@ -57,50 +57,50 @@ data_sample = {
 
 # Task 4
 
-# # Load the data
-# input_data = r"../input/df_rolling.csv"
-# df = pd.read_csv(input_data)
+# Load the data
+input_data = r"../input/df_rolling.csv"
+df = pd.read_csv(input_data)
 
-# # Define features and target
-# X = df.drop(columns=[prediction_col])
-# y = df[prediction_col]
+# Define features and target
+X = df.drop(columns=[prediction_col])
+y = df[prediction_col]
 
-# # Handle missing values
-# X = X.fillna(0)
-# y = y.fillna(y.mean())
+# Handle missing values
+X = X.fillna(0)
+y = y.fillna(y.mean())
 
-# # Split into train and test
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split into train and test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# # Train Random Forest
-# model = RandomForestRegressor(random_state=42)
+# Train Random Forest
+model = RandomForestRegressor(random_state=42)
 
-# search_space = {
-#     'n_estimators': [50,100,150,200],
-#     'max_depth': [5, 10, 15, 20, 25],
-#     'min_samples_split': [2,3,4],
-#     'min_samples_leaf': [1,2,3],
-#     'max_features': ["sqrt", "log2"]
-# }
+search_space = {
+    'n_estimators': [50,100,150,200],
+    'max_depth': [5, 10, 15, 20, 25],
+    'min_samples_split': [2,3,4],
+    'min_samples_leaf': [1,2,3],
+    'max_features': ["sqrt", "log2"]
+}
 
-# # Perform grid search with 3-fold cross-validation (based on R² score)
-# tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
+# Perform grid search with 3-fold cross-validation (based on R² score)
+tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
 
-# fitted_model = tuned_model.fit(X_train, y_train)
-# print("Best hyperparameters:", str(fitted_model.best_params_))
+fitted_model = tuned_model.fit(X_train, y_train)
+print("Best hyperparameters:", str(fitted_model.best_params_))
 
-# # Evaluate the model
-# y_pred = fitted_model.predict(X_test)
-# print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
-# print("R² Score:", r2_score(y_test, y_pred))
+# Evaluate the model
+y_pred = fitted_model.predict(X_test)
+print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
+print("R² Score:", r2_score(y_test, y_pred))
 
-# # Feature importance plot
-# feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
-# feature_importances.nlargest(10).plot(kind='barh')
-# plt.title("Top 10 Feature Importances")
-# plt.xlabel("Importance")
-# plt.tight_layout()
-# plt.show()
+# Feature importance plot
+feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
+feature_importances.nlargest(10).plot(kind='barh')
+plt.title("Top 10 Feature Importances")
+plt.xlabel("Importance")
+plt.tight_layout()
+plt.show()
 
 # Task 4.Temporal
 
