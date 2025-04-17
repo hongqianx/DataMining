@@ -9,9 +9,10 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_absolute_error
 import logging
+import sys
 
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
@@ -61,16 +62,29 @@ y = y.fillna(y.mean())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train Random Forest
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+model = RandomForestClassifier(random_state=42)
+
+search_space = {
+    'n_estimators': [50,100,150,200],
+    'max_depth': [5, 10, 15, 20, 25],
+    'min_samples_split': [2,3,4],
+    'min_samples_leaf': [1,2,3],
+    'max_features': ["sqrt", "log2"]
+}
+
+# Perform grid search with 3-fold cross-validation (based on R² score)
+tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
+
+fitted_model = tuned_model.fit(X_train, y_train)
+print("Best hyperparameters:", str(fitted_model.best_params_))
 
 # Evaluate the model
-y_pred = model.predict(X_test)
+y_pred = fitted_model.predict(X_test)
 print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
 print("R² Score:", r2_score(y_test, y_pred))
 
 # Feature importance plot
-feature_importances = pd.Series(model.feature_importances_, index=X.columns)
+feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
 feature_importances.nlargest(10).plot(kind='barh')
 plt.title("Top 10 Feature Importances")
 plt.xlabel("Importance")
@@ -88,22 +102,6 @@ tf.config.set_visible_devices([], 'GPU')
 # Load the data
 input_data = r"../input/df_interp_6hour.csv"
 df = pd.read_csv(input_data)
-
-# Define function to split our mood in segments
-# For now we split it in 0 = low, 1 = neutral, 2 = good, 3 = great
-def split_mood_segments(mood):
-    match mood:
-        case mood if mood <= 4:
-            return 0
-        case mood if mood <= 6:
-            return 1
-        case mood if mood <= 8:
-            return 2
-        case mood if mood > 8:
-            return 3
-        case _:
-            logger.error(f"Invalid mood value: {mood}")
-            return -1
 
 # Perform scaling and sort data
 scaler = StandardScaler()

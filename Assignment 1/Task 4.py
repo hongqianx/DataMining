@@ -9,9 +9,10 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_absolute_error
 import logging
+import sys
 
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
@@ -71,16 +72,29 @@ y = y.fillna(y.mean())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train Random Forest
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+model = RandomForestRegressor(random_state=42)
+
+search_space = {
+    'n_estimators': [50,100,150,200],
+    'max_depth': [5, 10, 15, 20, 25],
+    'min_samples_split': [2,3,4],
+    'min_samples_leaf': [1,2,3],
+    'max_features': ["sqrt", "log2"]
+}
+
+# Perform grid search with 3-fold cross-validation (based on R² score)
+tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
+
+fitted_model = tuned_model.fit(X_train, y_train)
+print("Best hyperparameters:", str(fitted_model.best_params_))
 
 # Evaluate the model
-y_pred = model.predict(X_test)
+y_pred = fitted_model.predict(X_test)
 print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
 print("R² Score:", r2_score(y_test, y_pred))
 
 # Feature importance plot
-feature_importances = pd.Series(model.feature_importances_, index=X.columns)
+feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
 feature_importances.nlargest(10).plot(kind='barh')
 plt.title("Top 10 Feature Importances")
 plt.xlabel("Importance")
@@ -92,54 +106,53 @@ plt.show()
 # Configure GPU transcoding if it is available, otherwise fall back to using just the cpu
 # device = torch.device("cpu")
 # print(f"Using device: {device}")
-with tf.device("/CPU:0"):
-    # Load the data
-    input_data = r"../input/df_interp_6hour.csv"
-    df = pd.read_csv(input_data)
+# Load the data
+input_data = r"../input/df_interp_6hour.csv"
+df = pd.read_csv(input_data)
 
-    # Perform scaling and sort data
-    scaler = StandardScaler()
-    df[feature_cols] = scaler.fit_transform(df[feature_cols])
-    df = df.sort_values(by=['id', 'time_bin']) # Scale by first user then time
+# Perform scaling and sort data
+scaler = StandardScaler()
+df[feature_cols] = scaler.fit_transform(df[feature_cols])
+df = df.sort_values(by=['id', 'time_bin']) # Scale by first user then time
 
-    # LSTM expects sequences, declare the amount
-    seq_length = 6  # (sequence length)
-    X_sequences = []
-    y_sequences = []
+# LSTM expects sequences, declare the amount
+seq_length = 6  # (sequence length)
+X_sequences = []
+y_sequences = []
 
-    # Create sequences
-    for i in range(seq_length, len(df)):
-        X_sequences.append(df[feature_cols].iloc[i-seq_length:i].values)  # Collect features for the sequence
-        y_sequences.append(df['mood'].iloc[i])
+# Create sequences
+for i in range(seq_length, len(df)):
+    X_sequences.append(df[feature_cols].iloc[i-seq_length:i].values)  # Collect features for the sequence
+    y_sequences.append(df['mood'].iloc[i])
 
-    X_sequences = np.array(X_sequences)
-    y_sequences = np.array(y_sequences)
+X_sequences = np.array(X_sequences)
+y_sequences = np.array(y_sequences)
 
-    # Split data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
 
-    # Define LSTM model
-    model = Sequential()
-    model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
-    model.add(Dropout(0.2))  # Dropout for regularization
-    model.add(Dense(units=1, activation='linear'))  # Output layer for regression (mood prediction)
+# Define LSTM model
+model = Sequential()
+model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
+model.add(Dropout(0.2))  # Dropout for regularization
+model.add(Dense(units=1, activation='linear'))  # Output layer for regression (mood prediction)
 
-    # Compile model with mean absolute error
-    model.compile(optimizer=Adam(), loss='mean_absolute_error', metrics=['mae'])
+# Compile model with mean absolute error
+model.compile(optimizer=Adam(), loss='mean_absolute_error', metrics=['mae'])
 
-    # Train model
-    model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+# Train model
+model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
 
-    # Evaluate model
-    loss, mae = model.evaluate(X_test, y_test)
-    print(f'Test Loss: {loss}, Test MAE: {mae}')
+# Evaluate model
+loss, mae = model.evaluate(X_test, y_test)
+print(f'Test Loss: {loss}, Test MAE: {mae}')
 
-    # Make predictions
-    predictions = model.predict(X_test)
+# Make predictions
+predictions = model.predict(X_test)
 
-    # Evaluate with MAE for predictions
-    mae_value = mean_absolute_error(y_test, predictions)
-    print(f'Mean Absolute Error: {mae_value}')
+# Evaluate with MAE for predictions
+mae_value = mean_absolute_error(y_test, predictions)
+print(f'Mean Absolute Error: {mae_value}')
 
 
 
