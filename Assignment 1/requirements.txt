@@ -4,3 +4,4 @@ matplotlib
 torch
 tensorflow
 scikit-learn
+keras-tuner

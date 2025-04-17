@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_absolute_error
 import logging
-import sys
+import keras_tuner as kt
 
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
@@ -46,50 +46,50 @@ feature_cols = [
 
 # Task 2A
 
-# Load the data
-input_data = r"../input/df_rolling.csv"
-df = pd.read_csv(input_data)
+# # Load the data
+# input_data = r"../input/df_rolling.csv"
+# df = pd.read_csv(input_data)
 
-# Define features and target
-X = df.drop(columns=[prediction_col])
-y = df[prediction_col].apply(lambda x: split_mood_segments(x))
+# # Define features and target
+# X = df.drop(columns=[prediction_col])
+# y = df[prediction_col].apply(lambda x: split_mood_segments(x))
 
-# Handle missing values
-X = X.fillna(0)
-y = y.fillna(y.mean())
+# # Handle missing values
+# X = X.fillna(0)
+# y = y.fillna(y.mean())
 
-# Split into train and test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# # Split into train and test
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train Random Forest
-model = RandomForestClassifier(random_state=42)
+# # Train Random Forest
+# model = RandomForestClassifier(random_state=42)
 
-search_space = {
-    'n_estimators': [50,100,150,200],
-    'max_depth': [5, 10, 15, 20, 25],
-    'min_samples_split': [2,3,4],
-    'min_samples_leaf': [1,2,3],
-    'max_features': ["sqrt", "log2"]
-}
+# search_space = {
+#     'n_estimators': [50,100,150,200],
+#     'max_depth': [5, 10, 15, 20, 25],
+#     'min_samples_split': [2,3,4],
+#     'min_samples_leaf': [1,2,3],
+#     'max_features': ["sqrt", "log2"]
+# }
 
-# Perform grid search with 3-fold cross-validation (based on R² score)
-tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
+# # Perform grid search with 3-fold cross-validation (based on R² score)
+# tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
 
-fitted_model = tuned_model.fit(X_train, y_train)
-print("Best hyperparameters:", str(fitted_model.best_params_))
+# fitted_model = tuned_model.fit(X_train, y_train)
+# print("Best hyperparameters:", str(fitted_model.best_params_))
 
-# Evaluate the model
-y_pred = fitted_model.predict(X_test)
-print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
-print("R² Score:", r2_score(y_test, y_pred))
+# # Evaluate the model
+# y_pred = fitted_model.predict(X_test)
+# print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
+# print("R² Score:", r2_score(y_test, y_pred))
 
-# Feature importance plot
-feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
-feature_importances.nlargest(10).plot(kind='barh')
-plt.title("Top 10 Feature Importances")
-plt.xlabel("Importance")
-plt.tight_layout()
-plt.show()
+# # Feature importance plot
+# feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
+# feature_importances.nlargest(10).plot(kind='barh')
+# plt.title("Top 10 Feature Importances")
+# plt.xlabel("Importance")
+# plt.tight_layout()
+# plt.show()
 
 # Task 2A.Temporal
 
@@ -125,24 +125,56 @@ y_sequences = np.array([split_mood_segments(mood) for mood in y_sequences])
 # Split data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
 
-# Define LSTM model
-model = Sequential()
-model.add(LSTM(units=50, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
-model.add(Dropout(0.2))  # Dropout for regularization
-model.add(Dense(units=4, activation='softmax')) # Output layer for classification (4 mood labels)
+# Define LSTM model prefilled with best values found in hyperparameter search.
+# model = Sequential()
+# model.add(LSTM(units=96, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
+# model.add(Dropout(0.1))  # Dropout for regularization
+# model.add(Dense(units=4, activation='softmax')) # Output layer for classification (4 mood labels)
+# # Compile model with cross entropy since we have more than 2 labels
+# model.compile(optimizer=Adam(learning_rate=0.01), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-# Compile model with cross entropy since we have more than 2 labels
-model.compile(optimizer=Adam(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+# Hyperparameter search help function
+def build_model(hp):
+    model = Sequential()
+    model.add(LSTM(
+        units=hp.Int('units', min_value=32, max_value=96, step=32),
+        return_sequences=False,
+        input_shape=(X_train.shape[1], X_train.shape[2])
+    ))
+    model.add(Dropout(hp.Choice('dropout_rate', [0.1, 0.2, 0.3, 0.5])))
+    model.add(Dense(4, activation='softmax'))
+    model.compile(
+        optimizer=Adam(learning_rate=hp.Choice('learning_rate', [1e-2, 1e-3, 1e-4])),
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+    return model
+
+# Optimum found by HP search: 0.985 accuracy, mae 0.76, loss 1.26. {'units': 96, 'dropout_rate': 0.1, 'learning_rate': 0.01}
+tuner = kt.RandomSearch(
+    build_model,
+    objective='accuracy',
+    max_trials=500,
+    executions_per_trial=3,
+    directory='',
+    project_name='lstm_classification'
+)
+
+
 
 # Train model
-model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+tuner.search(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+
+best_model = tuner.get_best_models(num_models=1)[0]
+best_hp = tuner.get_best_hyperparameters(num_trials=1)[0]
+print(best_hp.values)
 
 # Evaluate model
-loss, mae = model.evaluate(X_test, y_test)
+loss, mae = best_model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test MAE: {mae}')
 
 # Make predictions
-predictions = model.predict(X_test)
+predictions = best_model.predict(X_test)
 
 # Evaluate with MAE for predictions
 # mae_value = mean_absolute_error(y_test, predictions)
@@ -158,10 +190,10 @@ X_test_seq = df[feature_cols].values.reshape(1, 6, len(feature_cols))  # shape =
 # Fake training on a dummy batch so we can predict
 X_dummy = np.tile(X_test_seq, (10, 1, 1))  # 10 dummy sequences
 y_dummy = np.zeros((10,))  # All labeled as class 0 for quick test
-model.fit(X_dummy, y_dummy, epochs=1, verbose=0)
+best_model.fit(X_dummy, y_dummy, epochs=1, verbose=0)
 
 # Predict
-pred = model.predict(X_test_seq)
+pred = best_model.predict(X_test_seq)
 predicted_class = np.argmax(pred, axis=1)[0]
 
 print(f"Predicted mood class: {predicted_class}")
