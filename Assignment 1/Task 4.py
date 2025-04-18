@@ -142,6 +142,7 @@ predictions = model.predict(X_test)
 # Evaluate with MAE for predictions
 mae_value = mean_absolute_error(y_test, predictions)
 print(f'Mean Absolute Error: {mae_value}')
+print("R² score:", r2_score(y_test, predictions))
 
 
 
