@@ -9,7 +9,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, StratifiedKFold
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, StratifiedKFold, KFold
 from sklearn.metrics import mean_absolute_error
 import logging
 import keras_tuner as kt
@@ -202,8 +202,67 @@ print(best_hp.values)
 loss, mae = best_model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test MAE: {mae}')
 
+# Fine-tuning the hyperparameters with Optuna around Keras Tuner result
+def objective(trial):
+    units = trial.suggest_int('units', best_hp['units'] - 16,
+       best_hp['units'] + 16)
+    dropout_rate = trial.suggest_categorical('dropout_rate', [best_hp['dropout_rate'] - 0.05, best_hp['dropout_rate'],
+       best_hp['dropout_rate'] + 0.05])
+    learning_rate = trial.suggest_loguniform('learning_rate', best_hp['learning_rate'] * 0.1,
+       best_hp['learning_rate'] * 10)
+
+    model = Sequential()
+    model.add(LSTM(units=units, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(4, activation='softmax'))
+
+    model.compile(optimizer=Adam(learning_rate=learning_rate),
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    # K-fold cross-validation
+    kfold = KFold(n_splits=3, shuffle=True, random_state=42)
+    cv_scores = []
+
+    for train_idx, val_idx in kfold.split(X_train):
+        X_train_fold, X_val_fold = X_train[train_idx], X_train[val_idx]
+        y_train_fold, y_val_fold = y_train[train_idx], y_train[val_idx]
+
+        # Train the model on the fold
+        model.fit(X_train_fold, y_train_fold, epochs=10, batch_size=32, verbose=0)
+
+        # Evaluate on validation fold
+        val_loss, val_accuracy = model.evaluate(X_val_fold, y_val_fold, verbose=0)
+        cv_scores.append(val_accuracy)
+
+    # Return the average accuracy score for this trial
+    return np.mean(cv_scores)
+
+
+# Create an Optuna study and optimize it
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=50)
+optuna_best_params = study.best_params
+print("Best Optuna Hyperparameters:", optuna_best_params)
+
+# Train the final model with the best Optuna hyperparameters
+final_model = Sequential()
+final_model.add(LSTM(units=optuna_best_params['units'], return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))
+final_model.add(Dropout(optuna_best_params['dropout_rate']))
+final_model.add(Dense(4, activation='softmax'))
+
+final_model.compile(optimizer=Adam(learning_rate=optuna_best_params['learning_rate']),
+                    loss='sparse_categorical_crossentropy',
+                    metrics=['accuracy'])
+
+final_model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+
+#Evaluate the final model
+loss, accuracy = final_model.evaluate(X_test, y_test)
+print(f"Test Loss: {loss}, Test Accuracy: {accuracy}")
+
 # Make predictions
-predictions = best_model.predict(X_test)
+predictions = final_model.predict(X_test)
 y_pred = np.argmax(predictions, axis=1)
 
 print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
