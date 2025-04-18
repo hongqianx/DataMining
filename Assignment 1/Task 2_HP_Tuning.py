@@ -62,17 +62,29 @@ y = y.fillna(y.mean())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Train Random Forest
-model = RandomForestClassifier(random_state=42, max_depth=15, max_features='sqrt', min_samples_leaf=3, min_samples_split=2, n_estimators=150)
+model = RandomForestClassifier(random_state=42)
 
-model.fit(X_train, y_train)
+search_space = {
+    'n_estimators': [50,100,150,200],
+    'max_depth': [5, 10, 15, 20, 25],
+    'min_samples_split': [2,3,4],
+    'min_samples_leaf': [1,2,3],
+    'max_features': ["sqrt", "log2"]
+}
+
+# Perform grid search with 3-fold cross-validation (based on accuracy score)
+tuned_model = GridSearchCV(model, search_space, cv=3, scoring='accuracy', n_jobs=-1, verbose=1)
+
+fitted_model = tuned_model.fit(X_train, y_train)
+print("Best hyperparameters:", str(fitted_model.best_params_))
 
 # Evaluate the model
-y_pred = model.predict(X_test)
+y_pred = fitted_model.predict(X_test)
 print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
 print("Accuracy Score:", accuracy_score(y_test, y_pred))
 
 # Feature importance plot
-feature_importances = pd.Series(model.feature_importances_, index=X.columns)
+feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
 feature_importances.nlargest(10).plot(kind='barh')
 plt.title("Top 10 Feature Importances")
 plt.xlabel("Importance")
@@ -113,27 +125,48 @@ y_sequences = np.array([split_mood_segments(mood) for mood in y_sequences])
 # Split data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X_sequences, y_sequences, test_size=0.2, random_state=42)
 
-# Define LSTM model prefilled with best values found in hyperparameter search.
-model = Sequential()
-model.add(LSTM(units=96, return_sequences=False, input_shape=(X_train.shape[1], X_train.shape[2])))  # LSTM layer
-model.add(Dropout(0.1))  # Dropout for regularization
-model.add(Dense(units=4, activation='softmax')) # Output layer for classification (4 mood labels)
-# Compile model with cross entropy since we have more than 2 labels
-model.compile(optimizer=Adam(learning_rate=0.01), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+# Hyperparameter search help function
+def build_model(hp):
+    model = Sequential()
+    model.add(LSTM(
+        units=hp.Int('units', min_value=32, max_value=96, step=32),
+        return_sequences=False,
+        input_shape=(X_train.shape[1], X_train.shape[2])
+    ))
+    model.add(Dropout(hp.Choice('dropout_rate', [0.1, 0.2, 0.3, 0.5])))
+    model.add(Dense(4, activation='softmax'))
+    model.compile(
+        optimizer=Adam(learning_rate=hp.Choice('learning_rate', [1e-2, 1e-3, 1e-4])),
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+    return model
+
+# Optimum found by HP search: 0.985 accuracy, mae 0.76, loss 1.26. {'units': 96, 'dropout_rate': 0.1, 'learning_rate': 0.01}
+tuner = kt.RandomSearch(
+    build_model,
+    objective='accuracy',
+    max_trials=500,
+    executions_per_trial=3,
+    directory='',
+    project_name='lstm_classification'
+)
+
+
 
 # Train model
-model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
+tuner.search(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
 
-# best_model = model.get_best_models(num_models=1)[0]
-# best_hp = model.get_best_hyperparameters(num_trials=1)[0]
-# print(best_hp.values)
+best_model = tuner.get_best_models(num_models=1)[0]
+best_hp = tuner.get_best_hyperparameters(num_trials=1)[0]
+print(best_hp.values)
 
 # Evaluate model
-loss, mae = model.evaluate(X_test, y_test)
+loss, mae = best_model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test MAE: {mae}')
 
 # Make predictions
-predictions = model.predict(X_test)
+predictions = best_model.predict(X_test)
 y_pred = np.argmax(predictions, axis=1)
 
 print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
