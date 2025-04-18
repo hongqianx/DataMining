@@ -3,7 +3,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
@@ -12,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_absolute_error
 import logging
-import sys
 import keras_tuner as kt
 
 # Set up a basic logger
@@ -149,7 +147,7 @@ def build_model(hp):
     )
     return model
 
-# optimum: {'units': 96, 'dropout_rate': 0.1, 'learning_rate': 0.01}. best mae 0.519, test loss= test mae = 0.586
+# optimum: {'units': 96, 'dropout_rate': 0.1, 'learning_rate': 0.01}. best mae 0.5109, test loss= test mae = 0.586
 tuner = kt.RandomSearch(
     build_model,
     objective='mae',

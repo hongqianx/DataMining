@@ -1,20 +1,17 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, StratifiedKFold, KFold
-from sklearn.metrics import mean_absolute_error
 import logging
 import keras_tuner as kt
 import optuna
-import plotly
 
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
