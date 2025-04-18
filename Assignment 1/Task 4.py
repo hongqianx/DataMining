@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -93,6 +93,7 @@ print("Best hyperparameters:", str(fitted_model.best_params_))
 y_pred = fitted_model.predict(X_test)
 print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
 print("R² Score:", r2_score(y_test, y_pred))
+print("Mean Absolute Error (MAE):", mean_absolute_error(y_test, y_pred))
 
 # Feature importance plot
 feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)

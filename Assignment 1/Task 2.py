@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -72,16 +72,16 @@ search_space = {
     'max_features': ["sqrt", "log2"]
 }
 
-# Perform grid search with 3-fold cross-validation (based on R² score)
-tuned_model = GridSearchCV(model, search_space, cv=3, scoring='r2', n_jobs=-1, verbose=1)
+# Perform grid search with 3-fold cross-validation (based on accuracy score)
+tuned_model = GridSearchCV(model, search_space, cv=3, scoring='accuracy', n_jobs=-1, verbose=1)
 
 fitted_model = tuned_model.fit(X_train, y_train)
 print("Best hyperparameters:", str(fitted_model.best_params_))
 
 # Evaluate the model
 y_pred = fitted_model.predict(X_test)
-print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
-print("R² Score:", r2_score(y_test, y_pred))
+print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
+print("Accuracy Score:", accuracy_score(y_test, y_pred))
 
 # Feature importance plot
 feature_importances = pd.Series(fitted_model.best_estimator_.feature_importances_, index=X.columns)
