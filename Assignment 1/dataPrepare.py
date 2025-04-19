@@ -236,14 +236,10 @@ process.multi_hist_plot(columns=value_cols, fig_path="../image/trimmed_dist.png"
 
 # 5. aggregate data by day
 print(df_trim['time'].head())
-# df_expand['day'] = df_expand['time'].dt.date
-# df_expand['hour'] = df_expand['time'].dt.hour
-# group_cols = ['id', 'day', 'hour']
 
 df_agg = process.data_aggregate(data=df_trim)
 df_agg.to_csv('../input/df_agg_6hour.csv', index=False)
 
-# df_agg = pd.read_csv('../input/df_agg_hour.csv')
 # check missing value percentage
 missing_ratio = df_agg.isna().mean()
 # get value range

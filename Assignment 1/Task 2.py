@@ -81,10 +81,12 @@ plt.show()
 
 # Task 2A.Temporal
 
-# Configure GPU transcoding if it is available, otherwise fall back to using just the cpu
-# device = torch.device("cpu")
+# Configure GPU transcoding if it is available, otherwise fall back to using just the cpu (tested on cpu, gpu untested)
+# Comment back in to use gpu
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print(f"Using device: {device}")
 
+# fix for tf always choosing the GPU instead of the CPU. Comment out to use gpu (untested)
 tf.config.set_visible_devices([], 'GPU')
 
 # Load the data
@@ -124,10 +126,6 @@ model.compile(optimizer=Adam(learning_rate=0.01), loss='sparse_categorical_cross
 # Train model
 model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
 
-# best_model = model.get_best_models(num_models=1)[0]
-# best_hp = model.get_best_hyperparameters(num_trials=1)[0]
-# print(best_hp.values)
-
 # Evaluate model
 loss, mae = model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss}, Test MAE: {mae}')
@@ -138,107 +136,3 @@ y_pred = np.argmax(predictions, axis=1)
 
 print("F1 Score:", f1_score(y_test, y_pred, average='weighted'))
 print("Accuracy Score:", accuracy_score(y_test, y_pred))
-
-# Evaluate with MAE for predictions
-# mae_value = mean_absolute_error(y_test, predictions)
-# print(f'Mean Absolute Error: {mae_value}')
-
-
-
-
-
-# # Extract one sequence
-# X_test_seq = df[feature_cols].values.reshape(1, 6, len(feature_cols))  # shape = (1, 6, features)
-
-# # Fake training on a dummy batch so we can predict
-# X_dummy = np.tile(X_test_seq, (10, 1, 1))  # 10 dummy sequences
-# y_dummy = np.zeros((10,))  # All labeled as class 0 for quick test
-# best_model.fit(X_dummy, y_dummy, epochs=1, verbose=0)
-
-# # Predict
-# pred = best_model.predict(X_test_seq)
-# predicted_class = np.argmax(pred, axis=1)[0]
-
-# print(f"Predicted mood class: {predicted_class}")
-# print(f"Class probabilities: {pred}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# TODO Tune variables!!!
-
-# # Optional: scale features
-# pipeline = Pipeline([
-#     ('scaler', StandardScaler()),
-#     ('regressor', MLPRegressor(max_iter=2000, random_state=42))
-# ])
-#
-# # Define hyperparameter grid for neural network
-# param_grid = {
-#     'regressor__hidden_layer_sizes': [(32,), (64,), (64, 32), (128, 64)],  # Number of neurons per layer
-#     'regressor__activation': ['relu', 'tanh'],  # Activation functions
-#     'regressor__solver': ['adam', 'lbfgs'],  # Optimizer types
-#     'regressor__alpha': [0.0001, 0.001, 0.01],  # Regularization
-# }
-#
-# # Perform grid search with 5-fold cross-validation (based on R² score)
-# grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='r2', n_jobs=-1, verbose=1)
-# grid_search.fit(X_train, y_train)
-#
-# # Use the best model found
-# best_nn_model = grid_search.best_estimator_
-# y_pred_nn = best_nn_model.predict(X_test)
-#
-# # Evaluate
-# mse_nn = mean_squared_error(y_test, y_pred_nn)
-# rmse_nn = np.sqrt(mse_nn)
-# r2_nn = r2_score(y_test, y_pred_nn)
-#
-# # Tune the neural network regressor
-# nn_model = MLPRegressor(hidden_layer_sizes=(4, 2),
-#                         activation='relu',
-#                         solver='adam',
-#                         max_iter=500,
-#                         random_state=42)
-# nn_model.fit(X_train, y_train)
-# y_pred_nn = nn_model.predict(X_test)
-#
-# mse_nn = mean_squared_error(y_test, y_pred_nn)
-# rmse_nn = np.sqrt(mse_nn)
-# r2_nn = r2_score(y_test, y_pred_nn)
-#
-# print(f"\nNeural Network Results:")
-# print(f"Mean Squared Error (MSE): {mse_nn:.3f}")
-# print(f"Root Mean Squared Error (RMSE): {rmse_nn:.3f}")
-# print(f"R² Score: {r2_nn:.3f}")
