@@ -54,36 +54,88 @@ def feature_engineering(data):
 
     return data
 
+# TODO below was the old function to handle outliers, however 
 # For outliers in the data, handle them individually
-def handle_outliers(data, columns, upper_percent=0.99):
-    df_trim = data.copy()
-    PRICE_OUTLIER = 20000
+# def handle_outliers(data, columns, upper_percent=0.99):
+#     df_trim = data.copy()
+#     PRICE_OUTLIER = 20000
 
-  # Handle unknown values of all columns per-case
-    df_trim["visitor_hist_starrating"] = df_trim["visitor_hist_starrating"].fillna((df_trim["visitor_hist_starrating"].median()))
-    df_trim["visitor_hist_adr_usd"] = df_trim["visitor_hist_adr_usd"].fillna((df_trim["visitor_hist_adr_usd"].median()))
-    df_trim["prop_review_score"] = df_trim["prop_review_score"].fillna(0)
-    df_trim["prop_location_score2"] = df_trim["prop_location_score2"].fillna(0)
-    # Consider worst case scenario if affinity is not available
-    df_trim["srch_query_affinity_score"] = df_trim["srch_query_affinity_score"].fillna(df_trim["srch_query_affinity_score"].min())
-    df_trim["orig_destination_distance"] = df_trim["orig_destination_distance"].fillna(df_trim["orig_destination_distance"].median())
-    for x in range(1,8):
-        df_trim["comp" + str(x) + "_rate"] = df_trim["comp" + str(x) + "_rate"].fillna(df_trim["comp" + str(x) + "_rate"].median())
-        df_trim["comp" + str(x) + "_inv"] = df_trim["comp" + str(x) + "_inv"].fillna(df_trim["comp" + str(x) + "_inv"].median())
-        df_trim["comp" + str(x) + "_rate_percent_diff"] = df_trim["comp" + str(x) + "_rate_percent_diff"].fillna(df_trim["comp" + str(x) + "_rate_percent_diff"].median())
-    df_trim.loc[df_trim["price_usd"] > PRICE_OUTLIER, "price_usd"] = df_trim["price_usd"].median()
-    df_trim["gross_bookings_usd"] = df_trim["gross_bookings_usd"].fillna(df_trim["gross_bookings_usd"].median())
+#   # Handle unknown values of all columns per-case
+#     df_trim["visitor_hist_starrating"] = df_trim["visitor_hist_starrating"].fillna((df_trim["visitor_hist_starrating"].median()))
+#     df_trim["visitor_hist_adr_usd"] = df_trim["visitor_hist_adr_usd"].fillna((df_trim["visitor_hist_adr_usd"].median()))
+#     df_trim["prop_review_score"] = df_trim["prop_review_score"].fillna(0)
+#     df_trim["prop_location_score2"] = df_trim["prop_location_score2"].fillna(0)
+#     # Consider worst case scenario if affinity is not available
+#     df_trim["srch_query_affinity_score"] = df_trim["srch_query_affinity_score"].fillna(df_trim["srch_query_affinity_score"].min())
+#     df_trim["orig_destination_distance"] = df_trim["orig_destination_distance"].fillna(df_trim["orig_destination_distance"].median())
+#     for x in range(1,8):
+#         df_trim["comp" + str(x) + "_rate"] = df_trim["comp" + str(x) + "_rate"].fillna(df_trim["comp" + str(x) + "_rate"].median())
+#         df_trim["comp" + str(x) + "_inv"] = df_trim["comp" + str(x) + "_inv"].fillna(df_trim["comp" + str(x) + "_inv"].median())
+#         df_trim["comp" + str(x) + "_rate_percent_diff"] = df_trim["comp" + str(x) + "_rate_percent_diff"].fillna(df_trim["comp" + str(x) + "_rate_percent_diff"].median())
+#     df_trim.loc[df_trim["price_usd"] > PRICE_OUTLIER, "price_usd"] = df_trim["price_usd"].median()
+#     df_trim["gross_bookings_usd"] = df_trim["gross_bookings_usd"].fillna(df_trim["gross_bookings_usd"].median())
 
-    return df_trim
+#     return df_trim
+
+def get_imputation_values(train_data):
+    impute_values = {
+        "visitor_hist_starrating": train_data["visitor_hist_starrating"].median(),
+        "visitor_hist_adr_usd": train_data["visitor_hist_adr_usd"].median(),
+        "prop_review_score": 0,
+        "prop_location_score2": 0,
+        "srch_query_affinity_score": train_data["srch_query_affinity_score"].min(),
+        "orig_destination_distance": train_data["orig_destination_distance"].median(),
+        "gross_bookings_usd": train_data["gross_bookings_usd"].median(),
+        "price_usd_cap": 20000,
+        "price_usd_median": train_data["price_usd"].median()
+    }
+
+    for x in range(1, 9):
+        impute_values[f"comp{x}_rate"] = train_data[f"comp{x}_rate"].median()
+        impute_values[f"comp{x}_inv"] = train_data[f"comp{x}_inv"].median()
+        impute_values[f"comp{x}_rate_percent_diff"] = train_data[f"comp{x}_rate_percent_diff"].median()
+    
+    return impute_values
+
+def apply_imputation(data, impute_values):
+    df = data.copy()
+
+    df["visitor_hist_starrating"] = df["visitor_hist_starrating"].fillna(impute_values["visitor_hist_starrating"])
+    df["visitor_hist_adr_usd"] = df["visitor_hist_adr_usd"].fillna(impute_values["visitor_hist_adr_usd"])
+    df["prop_review_score"] = df["prop_review_score"].fillna(impute_values["prop_review_score"])
+    df["prop_location_score2"] = df["prop_location_score2"].fillna(impute_values["prop_location_score2"])
+    df["srch_query_affinity_score"] = df["srch_query_affinity_score"].fillna(impute_values["srch_query_affinity_score"])
+    df["orig_destination_distance"] = df["orig_destination_distance"].fillna(impute_values["orig_destination_distance"])
+
+    # Only impute gross_bookings_usd in training set, test set does not contain this column
+    if ("gross_bookings_usd" in data.columns):
+        df["gross_bookings_usd"] = df["gross_bookings_usd"].fillna(impute_values["gross_bookings_usd"])
+
+    for x in range(1, 9):
+        df[f"comp{x}_rate"] = df[f"comp{x}_rate"].fillna(impute_values[f"comp{x}_rate"])
+        df[f"comp{x}_inv"] = df[f"comp{x}_inv"].fillna(impute_values[f"comp{x}_inv"])
+        df[f"comp{x}_rate_percent_diff"] = df[f"comp{x}_rate_percent_diff"].fillna(impute_values[f"comp{x}_rate_percent_diff"])
+
+    df.loc[df["price_usd"] > impute_values["price_usd_cap"], "price_usd"] = impute_values["price_usd_median"]
+
+    return df
 
 def transform_data(data):
     data['date_time_epoch'] = pd.to_datetime(data['date_time']).apply(lambda x: x.timestamp())
     data = data.drop(columns=['date_time'])
     return data
 
+# Determine imputation values on trainingset
+impute_values = get_imputation_values(df)
+
+# Apply the same imputation on training and test
 df = transform_data(df)
+df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
-df = handle_outliers(df, df.columns)
+
+df_test = transform_data(df_test)
+df_test = apply_imputation(df_test, impute_values)
+df_test = feature_engineering(df_test)
 
 target_value = "booking_bool"
 target_col = df[target_value]
@@ -191,7 +243,8 @@ stacking_model = StackingRegressor(
     final_estimator=RandomForestRegressor(n_estimators=1)
 )
 
-logger.info("Training ensemble model")
+logger.info(f"Training ensemble model with {len(best_models)} base models")
+logger.info(f"Using the following data types for x: {x_train.dtypes} and for y: {y_train.dtypes}")
 stacking_model.fit(x_train, y_train)
 logger.info("Ensemble model trained successfully")
 
