@@ -31,6 +31,7 @@ df = pd.read_csv(training_data)
 df_test = pd.read_csv(test_data)
 HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
+TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -54,7 +55,7 @@ def feature_engineering(data):
 
     return data
 
-# TODO below was the old function to handle outliers, however 
+# TODO Below was the old function to handle outliers, which can possibly be restored since the provided test set did not have predictory feature click_bool, thus we don't need to apply the same imputation
 # For outliers in the data, handle them individually
 # def handle_outliers(data, columns, upper_percent=0.99):
 #     df_trim = data.copy()
@@ -133,17 +134,21 @@ df = transform_data(df)
 df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
 
-df_test = transform_data(df_test)
-df_test = apply_imputation(df_test, impute_values)
-df_test = feature_engineering(df_test)
+# NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
+# df_test = transform_data(df_test)
+# df_test = apply_imputation(df_test, impute_values)
+# df_test = feature_engineering(df_test)
 
 target_value = "click_bool"
 exclude_values = [target_value] + ["booking_bool", "position", "gross_bookings_usd"]
 target_col = df[target_value]
 
 # Retrieve the data into training and testing sets (splitting is already done)
-x_train = df.drop(columns=[exclude_values])
-y_train = target_col
+X = df.drop(columns=exclude_values)
+y = target_col
+
+# NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
 
 kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
 
