@@ -73,7 +73,7 @@ def handle_outliers(data, columns, upper_percent=0.99):
     return df_trim
 
 def transform_data(data):
-    data['date_time_epoch'] = pd.to_datetime(data['date_time']) - dt.datetime(1970,1,1).total_seconds()
+    data['date_time_epoch'] = pd.to_datetime(data['date_time']).apply(lambda x: x.timestamp())
     data = data.drop(columns=['date_time'])
     return data
 
@@ -128,8 +128,7 @@ def hyperOptimization(trial, model_name):
         X_train_cv, X_val_cv = x_train.iloc[train_index], x_train.iloc[val_index]
         y_train_cv, y_val_cv = y_train.iloc[train_index], y_train.iloc[val_index]
 
-        # TODO Make this less complex 
-        model.fit(X_train_cv.to_numpy().reshape((X_train_cv.shape[0], 1, X_train_cv.shape[1])), y_train_cv)
+        model.fit(X_train_cv.to_numpy(), y_train_cv)
 
         y_pred = model.predict(X_val_cv)
         rmse = np.sqrt(np.mean((y_pred - y_val_cv)**2))
