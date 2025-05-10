@@ -1,0 +1,10 @@
+numpy
+pandas
+matplotlib
+scikit-learn
+optuna
+xgboost
+lightgbm
+catboost
+tensorflow==2.17.0
+keras==2.15.0
