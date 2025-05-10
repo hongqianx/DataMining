@@ -3,10 +3,12 @@ import sys
 import numpy as np
 import optuna
 import pandas as pd
+import cupy as cp
 import datetime as dt
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
 from lightgbm import LGBMRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score, r2_score
 from sklearn.model_selection import KFold, train_test_split
 from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
@@ -27,6 +29,8 @@ training_data = r"../input/training_set_VU_DM.csv"
 test_data = r"../input/test_set_VU_DM.csv"
 df = pd.read_csv(training_data)
 df_test = pd.read_csv(test_data)
+HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
+FOLD_AMOUNT = 3
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -93,7 +97,7 @@ if target_value in df_test.columns:
 else:
     x_test = df_test
     y_test = None
-kf = KFold(n_splits=5, shuffle=True, random_state=42)
+kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
 
 # Optimize hyperparameters for ensemble models
 def hyperOptimization(trial, model_name):
@@ -125,10 +129,13 @@ def hyperOptimization(trial, model_name):
 
     cv_rmse = []
     for train_index, val_index in kf.split(x_train):
+        logger.info(f"Training {model_name} on fold {len(cv_rmse) + 1}")
         X_train_cv, X_val_cv = x_train.iloc[train_index], x_train.iloc[val_index]
         y_train_cv, y_val_cv = y_train.iloc[train_index], y_train.iloc[val_index]
 
-        model.fit(X_train_cv.to_numpy(), y_train_cv)
+        logger.info(f"Start training of model {model_name}, at time {dt.datetime.now()}")
+        model.fit(X_train_cv, y_train_cv)
+        logger.info(f"End training of model {model_name}, at time {dt.datetime.now()}")
 
         y_pred = model.predict(X_val_cv)
         rmse = np.sqrt(np.mean((y_pred - y_val_cv)**2))
@@ -140,38 +147,70 @@ def hyperOptimization(trial, model_name):
     return avg_rmse
 
 def create_model(model_name, params):
-    if model_name == 'xgb': return XGBRegressor(**params)
-    elif model_name == 'lgbm': return LGBMRegressor(**params)
-    elif model_name == 'rf': return RandomForestRegressor(**params)
-    elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
+    if HAS_GPU:
+        if model_name == 'xgb': return XGBRegressor(device = "cuda", tree_method="hist", **params)
+        elif model_name == 'lgbm': return LGBMRegressor(device_type="GPU", **params)
+        elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
+        elif model_name == 'catboost': return CatBoostRegressor(task_type="GPU", **params, verbose=0)
+    else:
+        if model_name == 'xgb': return XGBRegressor(**params)
+        elif model_name == 'lgbm': return LGBMRegressor(**params)
+        elif model_name == 'rf': return RandomForestRegressor(**params)
+        elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
 models = ['xgb', 'lgbm', 'rf', 'catboost']
 
-
 # TODO below is work in progress
 # TODO use Neural network ensemble
-
 best_models = []
 for model_name in models:
-    study = optuna.create_study(direction='minimize')
-    study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=50)
+    study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner())
+    study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=1)
 
-    print(f"Best hyperparameters for {model_name}: {study.best_params}")
+    logger.info(f"Best hyperparameters for {model_name}: {study.best_params}")
 
-    best_params = study.best_params
-    best_model = create_model(model_name, best_params)
+    # Only append parameters of own model (default adds all)
+    prefix = model_name + "_"
+    filtered_params = {
+        key.replace(prefix, ''): value
+        for key, value in study.best_params.items()
+        if key.startswith(prefix)
+    }
+    best_model = create_model(model_name, filtered_params)
 
-    best_model.fit(x_train.reshape((x_train.shape[0], 1, x_train.shape[1])), y_train, epochs=5, batch_size=32, verbose=0)
+    # if (model_name == 'xgb' and HAS_GPU):
+    #     x_train = cp.array(cp.asarray(x_train.astype(np.float32).to_numpy()))
+
+    logger.info(f"Training {model_name} with best hyperparameters")
+    best_model.fit(x_train, y_train)
     best_models.append((model_name, best_model))
+    logger.info(f"Model (best) {model_name} trained successfully")
 
 stacking_model = StackingRegressor(
     estimators=[(name, model) for name, model in best_models],
-    final_estimator=RandomForestRegressor(n_estimators=50)
+    final_estimator=RandomForestRegressor(n_estimators=1)
 )
 
+logger.info("Training ensemble model")
 stacking_model.fit(x_train, y_train)
+logger.info("Ensemble model trained successfully")
 
 stacking_predictions = stacking_model.predict(x_test)
 
 stacking_rmse = np.sqrt(np.mean((stacking_predictions - y_test)**2))
 print(f"Ensemble model RMSE: {stacking_rmse}")
+
+
+if y_test is not None:
+    y_pred = stacking_model.predict(x_test)
+    y_pred_class = (y_pred >= 0.5).astype(int)
+
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    acc = accuracy_score(y_test, y_pred_class)
+
+    logger.info(f"Test MAE: {mae:.4f}")
+    logger.info(f"Test MSE: {mse:.4f}")
+    logger.info(f"Test R²: {r2:.4f}")
+    logger.info(f"Test Accuracy: {acc*100:.2f}%")
