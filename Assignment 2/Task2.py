@@ -137,18 +137,14 @@ df_test = transform_data(df_test)
 df_test = apply_imputation(df_test, impute_values)
 df_test = feature_engineering(df_test)
 
-target_value = "booking_bool"
+target_value = "click_bool"
+exclude_values = [target_value] + ["booking_bool", "position", "gross_bookings_usd"]
 target_col = df[target_value]
 
 # Retrieve the data into training and testing sets (splitting is already done)
-x_train = df.drop(columns=[target_value])
+x_train = df.drop(columns=[exclude_values])
 y_train = target_col
-if target_value in df_test.columns:
-    x_test = df_test.drop(columns=[target_value])
-    y_test = df_test[target_value]
-else:
-    x_test = df_test
-    y_test = None
+
 kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
 
 # Optimize hyperparameters for ensemble models
