@@ -32,6 +32,8 @@ df_test = pd.read_csv(test_data)
 HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
+OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
+ENSEMBLE_N_ESTIMATORS = 1 # Number of estimators for the final stacking model
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -86,7 +88,6 @@ def get_imputation_values(train_data):
         "prop_location_score2": 0,
         "srch_query_affinity_score": train_data["srch_query_affinity_score"].min(),
         "orig_destination_distance": train_data["orig_destination_distance"].median(),
-        "gross_bookings_usd": train_data["gross_bookings_usd"].median(),
         "price_usd_cap": 20000,
         "price_usd_median": train_data["price_usd"].median()
     }
@@ -107,10 +108,6 @@ def apply_imputation(data, impute_values):
     df["prop_location_score2"] = df["prop_location_score2"].fillna(impute_values["prop_location_score2"])
     df["srch_query_affinity_score"] = df["srch_query_affinity_score"].fillna(impute_values["srch_query_affinity_score"])
     df["orig_destination_distance"] = df["orig_destination_distance"].fillna(impute_values["orig_destination_distance"])
-
-    # Only impute gross_bookings_usd in training set, test set does not contain this column
-    if ("gross_bookings_usd" in data.columns):
-        df["gross_bookings_usd"] = df["gross_bookings_usd"].fillna(impute_values["gross_bookings_usd"])
 
     for x in range(1, 9):
         df[f"comp{x}_rate"] = df[f"comp{x}_rate"].fillna(impute_values[f"comp{x}_rate"])
@@ -135,9 +132,9 @@ df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
 
 # NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
-# df_test = transform_data(df_test)
-# df_test = apply_imputation(df_test, impute_values)
-# df_test = feature_engineering(df_test)
+df_test = transform_data(df_test)
+df_test = apply_imputation(df_test, impute_values)
+df_test = feature_engineering(df_test)
 
 target_value = "click_bool"
 exclude_values = [target_value] + ["booking_bool", "position", "gross_bookings_usd"]
@@ -147,7 +144,7 @@ target_col = df[target_value]
 X = df.drop(columns=exclude_values)
 y = target_col
 
-# NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
+# NOTE SINCE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL, WE USE THE TRAINING SET FOR TESTING
 x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
 
 kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
@@ -218,7 +215,7 @@ models = ['xgb', 'lgbm', 'rf', 'catboost']
 best_models = []
 for model_name in models:
     study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner())
-    study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=1)
+    study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=OPTUNA_TRIALS)
 
     logger.info(f"Best hyperparameters for {model_name}: {study.best_params}")
 
@@ -241,7 +238,7 @@ for model_name in models:
 
 stacking_model = StackingRegressor(
     estimators=[(name, model) for name, model in best_models],
-    final_estimator=RandomForestRegressor(n_estimators=1)
+    final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS)
 )
 
 logger.info(f"Training ensemble model with {len(best_models)} base models")
@@ -253,7 +250,6 @@ stacking_predictions = stacking_model.predict(x_test)
 
 stacking_rmse = np.sqrt(np.mean((stacking_predictions - y_test)**2))
 print(f"Ensemble model RMSE: {stacking_rmse}")
-
 
 if y_test is not None:
     y_pred = stacking_model.predict(x_test)
@@ -268,3 +264,25 @@ if y_test is not None:
     logger.info(f"Test MSE: {mse:.4f}")
     logger.info(f"Test R²: {r2:.4f}")
     logger.info(f"Test Accuracy: {acc*100:.2f}%")
+
+# Transform results to proper submission format
+logger.info("Preparing Kaggle test set for final prediction")
+df_test_submission_features = df_test[X.columns] # Ensure df_test is preprocessed and X.columns are training features
+logger.info("Generating predictions on Kaggle test set")
+kaggle_predictions = stacking_model.predict(df_test_submission_features)
+logger.info("Predictions for Kaggle test set generated.")
+
+def create_submission_file(original_test_dataframe, predictions_array, output_filename="submission.csv"):
+    submission = original_test_dataframe[['srch_id', 'prop_id']].copy()
+    submission['prediction_score'] = predictions_array
+
+    submission_sorted = submission.sort_values(
+        by=['srch_id', 'prediction_score'],
+        ascending=[True, False]
+    )
+
+    final_submission_df = submission_sorted[['srch_id', 'prop_id']]
+    final_submission_df.to_csv(output_filename, index=False)
+    logger.info(f"Kaggle submission file created: {output_filename}")
+
+create_submission_file(df_test, kaggle_predictions, "my_kaggle_submission.csv")
