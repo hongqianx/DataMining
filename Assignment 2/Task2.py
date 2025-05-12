@@ -42,6 +42,7 @@ FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
 ENSEMBLE_N_ESTIMATORS = 2 # Number of estimators for the final stacking model
+TRAIN_WITHOUT_EVALUATION = True # If we should train without evaluation, gives more training data but can't output evaluation metrics
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -153,7 +154,13 @@ X = df.drop(columns=exclude_values)
 y = target_col
 
 # NOTE SINCE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL, WE USE THE TRAINING SET FOR TESTING
-x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
+if TRAIN_WITHOUT_EVALUATION:
+    x_train = X
+    x_test = df_test.drop(columns=exclude_values)
+    y_train = y
+    y_test = None
+else:
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
 
 kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
 
