@@ -1,7 +1,9 @@
 import optuna
 import cudf
 import cupy as cp
+import pandas as pd
 import datetime as dt
+import numpy as np
 from cuml.ensemble import RandomForestRegressor as cuMLRandomForestRegressor
 import lightgbm as lgb 
 import xgboost as xgb
@@ -10,7 +12,6 @@ from cuml.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 from cuml.model_selection import train_test_split
-import pandas as pd
 from common.helpers import logger, has_nvidia_gpu
 from common.feature_engineering import feature_engineering
 from common.imputation import get_imputation_values, apply_imputation
@@ -21,8 +22,6 @@ if HAS_GPU:
     print(f"Found {cp.cuda.runtime.getDeviceCount()} GPUs. Using device 0")
 
 # --- Configuration ---
-training_data_path = r"../input/training_set_VU_DM.csv"
-test_data_path = r"../input/test_set_VU_DM.csv"
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10
 OPTUNA_TRIALS = 1
@@ -32,10 +31,16 @@ RANDOM_STATE = 42
 DATA_PRECISION = cp.float32 # For GPU handling
 
 # --- Load the data ---
+training_data_path = r"../input/training_set_VU_DM.csv"
+test_data_path = r"../input/test_set_VU_DM.csv"
+
+# --- Load the data ---
 logger.info("Loading data directly into DataFrames...")
 try:
-    df = cudf.read_csv(training_data_path)
-    df_test = cudf.read_csv(test_data_path)
+    df = pd.read_csv(training_data_path)
+    df_test = pd.read_csv(test_data_path)
+    # df_cudf = cudf.read_csv(training_data_path)
+    # df_cudf = cudf.read_csv(test_data_path)
     logger.info("Data loaded successfully.")
 except Exception as e:
      logger.critical(f"Failed to load data: {e}")
@@ -95,6 +100,7 @@ if TRAIN_WITHOUT_EVALUATION:
     y_val = None
 else:
     logger.info(f"Splitting data using {TESTSPLIT_RATIO}% for validation.")
+    X = X.fillna(0)
     x_train, x_val, y_train, y_val = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=RANDOM_STATE)
     logger.info(f"Train shape: {x_train.shape}, Validation shape: {x_val.shape}")
     del X, y
@@ -129,7 +135,7 @@ def hyperOptimization(trial, model_name):
             'max_depth': trial.suggest_int('lgbm_max_depth', 4, 10),
             'subsample': trial.suggest_float('lgbm_subsample', 0.6, 1.0), 
             'colsample_bytree': trial.suggest_float('lgbm_colsample_bytree', 0.6, 1.0), 
-            'device_type': 'GPU', #Use Cuda if can
+            'device_type': 'cuda', #Use Cuda if can
             'verbosity': -1,
             'random_state': RANDOM_STATE,
             'n_jobs': 1 # Somewhere recommended to set to 1 for GPU, so just use that for now
@@ -174,9 +180,9 @@ def hyperOptimization(trial, model_name):
         try:
             if model_name == 'lgbm':
                 # Use cupy arrays for lgb dataset
-                X_train_cp = X_train_cv
-                y_train_cp = y_train_cv
-                X_val_cp = X_val_cv
+                X_train_cp = cudf.DataFrame.from_pandas(X_train_cv)
+                y_train_cp = cudf.DataFrame.from_pandas(y_train_cv)
+                X_val_cp = cudf.DataFrame.from_pandas(X_val_cv)
 
                 lgb_train_data = lgb.Dataset(X_train_cp, label=y_train_cp)
                 model = lgb.train(params, lgb_train_data, num_boost_round=num_boost_round)
@@ -274,21 +280,23 @@ for model_name in models_to_optimize:
             dtrain = xgb.DMatrix(x_train, label=y_train)
             final_model = xgb.train(params, dtrain, num_boost_round=num_boost_round)
         elif model_name == 'lgbm':
-            params = {'objective': 'regression_l2', 'metric': 'rmse', 'device_type': 'gpu', 'verbosity': -1, 'random_state': RANDOM_STATE, 'n_jobs': 1}
+            params = {'objective': 'regression_l2', 'metric': 'rmse', 'device_type': 'cuda', 'verbosity': -1, 'random_state': RANDOM_STATE, 'n_jobs': 1}
             params.update(current_best_params)
             num_boost_round = params.pop('n_estimators', 100)
 
-            x_train_cp = x_train.to_cupy()
-            y_train_cp = y_train.to_cupy()
-            lgb_train_data = lgb.Dataset(data=x_train_cp, label=y_train_cp)
+            x_train_np = x_train.to_pandas().to_numpy() 
+            y_train_np = y_train.to_pandas().to_numpy()
+            lgb_train_data = lgb.Dataset(data=x_train_np, label=y_train_np)
 
             # TODO Cuda not working for lgbm
             final_model = lgb.train(params, lgb_train_data, num_boost_round=num_boost_round)
         elif model_name == 'catboost':
             params = {'loss_function': 'RMSE', 'verbose': 0, 'random_state': RANDOM_STATE, 'task_type': 'GPU', 'devices': '0'}
             params.update(current_best_params)
-            iterations = params.pop('iterations', 100) 
-            train_pool = cb.Pool(data=x_train, label=y_train)
+            iterations = params.pop('iterations', 100)
+
+            cat_train_x, cat_train_y = x_train.to_numpy(), y_train.to_numpy()
+            train_pool = cb.Pool(data=cat_train_x, label=cat_train_y)
             model_instance = cb.CatBoostRegressor(**params, iterations=iterations) 
             model_instance.fit(train_pool)
             final_model = model_instance

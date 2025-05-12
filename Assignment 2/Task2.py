@@ -14,7 +14,7 @@ from common.feature_engineering import feature_engineering
 from common.imputation import get_imputation_values, apply_imputation
 
 # --- Configuration ---
-HAS_GPU = has_nvidia_gpu() # False #HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
+HAS_GPU = False # has_nvidia_gpu() # False #HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
@@ -22,10 +22,10 @@ ENSEMBLE_N_ESTIMATORS = 2 # Number of estimators for the final stacking model
 TRAIN_WITHOUT_EVALUATION = True # If we should train without evaluation, gives more training data but can't output evaluation metrics
 
 # --- Load the data ---
-training_data = r"../input/training_set_VU_DM.csv"
-test_data = r"../input/test_set_VU_DM.csv"
-df = pd.read_csv(training_data)
-df_test = pd.read_csv(test_data)
+training_data_path = r"../input/training_set_VU_DM.csv"
+test_data_path = r"../input/test_set_VU_DM.csv"
+df = pd.read_csv(training_data_path)
+df_test = pd.read_csv(test_data_path)
 
 # --- Preprocessing Pipeline Execution ---
 logger.info("Starting preprocessing pipeline")
@@ -113,7 +113,7 @@ def hyperOptimization(trial, model_name):
 def create_model(model_name, params):
     if HAS_GPU:
         if model_name == 'xgb': return XGBRegressor(device = "cuda", tree_method="hist", **params)
-        elif model_name == 'lgbm': return LGBMRegressor(device_type="GPU", **params)
+        elif model_name == 'lgbm': return LGBMRegressor(device_type="gpu", **params)
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(task_type="GPU", **params, verbose=0)
     else:
