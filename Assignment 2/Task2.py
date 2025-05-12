@@ -118,10 +118,9 @@ def apply_imputation(data, impute_values):
     df["srch_query_affinity_score"] = df["srch_query_affinity_score"].fillna(impute_values["srch_query_affinity_score"])
     df["orig_destination_distance"] = df["orig_destination_distance"].fillna(impute_values["orig_destination_distance"])
 
+    # drop original competitor columns
     for x in range(1, 9):
-        df[f"comp{x}_rate"] = df[f"comp{x}_rate"].fillna(impute_values[f"comp{x}_rate"])
-        df[f"comp{x}_inv"] = df[f"comp{x}_inv"].fillna(impute_values[f"comp{x}_inv"])
-        df[f"comp{x}_rate_percent_diff"] = df[f"comp{x}_rate_percent_diff"].fillna(impute_values[f"comp{x}_rate_percent_diff"])
+        df.drop(columns=[f"comp{x}_rate", f"comp{x}_inv", f"comp{x}_rate_percent_diff"], inplace=True, errors='ignore')
 
     df.loc[df["price_usd"] > impute_values["price_usd_cap"], "price_usd"] = impute_values["price_usd_median"]
 
