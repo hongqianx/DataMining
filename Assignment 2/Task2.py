@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import optuna
 import pandas as pd
-import cupy as cp
+# import cupy as cp
 import datetime as dt
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
@@ -12,6 +12,14 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_sc
 from sklearn.model_selection import KFold, train_test_split
 from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
+import subprocess
+
+def has_nvidia_gpu():
+    try:
+        output = subprocess.check_output(["nvidia-smi"], stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
 
 # Set up a basic logger
 logger = logging.getLogger("MLLogger")
@@ -29,7 +37,7 @@ training_data = r"../input/training_set_VU_DM.csv"
 test_data = r"../input/test_set_VU_DM.csv"
 df = pd.read_csv(training_data)
 df_test = pd.read_csv(test_data)
-HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
+HAS_GPU = has_nvidia_gpu() #HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
