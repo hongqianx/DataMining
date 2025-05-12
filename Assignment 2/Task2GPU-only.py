@@ -1,6 +1,3 @@
-import logging
-import sys
-import numpy as np
 import optuna
 import cudf
 import cupy as cp
@@ -14,27 +11,14 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 from cuml.model_selection import train_test_split
 import pandas as pd
+from common.helpers import logger, has_nvidia_gpu
+from common.feature_engineering import feature_engineering
+from common.imputation import get_imputation_values, apply_imputation
 
 # --- GPU Check ---
-try:
-    HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
-    if not HAS_GPU:
-        raise SystemExit("No CUDA for GPU found. This script requires a GPU")
-    cp.cuda.Device(0).use()
+HAS_GPU = has_nvidia_gpu()
+if HAS_GPU:
     print(f"Found {cp.cuda.runtime.getDeviceCount()} GPUs. Using device 0")
-except Exception as e:
-    raise SystemExit(f"GPU check or cupy import failed: {e}")
-
-# Set up a basic logger
-logger = logging.getLogger("MLLogger")
-logger.setLevel(logging.DEBUG)
-
-if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
 # --- Configuration ---
 training_data_path = r"../input/training_set_VU_DM.csv"
@@ -47,7 +31,7 @@ TRAIN_WITHOUT_EVALUATION = False
 RANDOM_STATE = 42
 DATA_PRECISION = cp.float32 # For GPU handling
 
-# --- Data Loading (GPU) ---
+# --- Load the data ---
 logger.info("Loading data directly into DataFrames...")
 try:
     df = cudf.read_csv(training_data_path)
@@ -57,135 +41,42 @@ except Exception as e:
      logger.critical(f"Failed to load data: {e}")
 
 # --- Start preprocessing ---
-def feature_engineering(data):
-    logger.debug("Running feature engineering")
-    data_fe = data.copy()
-
-    # Feature for total number of persons
-    data_fe["total_people"] = data_fe["srch_adults_count"] + data_fe["srch_children_count"]
-
-    # Total price per night
-    data_fe["srch_length_of_stay_safe"] = data_fe["srch_length_of_stay"].replace(0, 1) 
-    data_fe["price_per_night"] = data_fe["price_usd"] / data_fe["srch_length_of_stay_safe"]
-    data_fe = data_fe.drop(columns=["srch_length_of_stay_safe"])
-    data_fe["price_per_night"] = data_fe["price_per_night"].fillna(0)
-
-    # History differences
-    data_fe["history_starrating_diff"] = data_fe["visitor_hist_starrating"] - data_fe["prop_starrating"]
-    data_fe["history_adr_diff"] = data_fe["visitor_hist_adr_usd"] - data_fe["price_usd"]
-
-    # Competitor features
-    comp_cols_base = ["comp1", "comp2", "comp3", "comp4", "comp5", "comp6", "comp7", "comp8"]
-    comp_rate_cols = [f"{c}_rate" for c in comp_cols_base if f"{c}_rate" in data_fe.columns]
-    comp_inv_cols = [f"{c}_inv" for c in comp_cols_base if f"{c}_inv" in data_fe.columns]
-    comp_rate_diff_cols = [f"{c}_rate_percent_diff" for c in comp_cols_base if f"{c}_rate_percent_diff" in data_fe.columns]
-
-    # Transformations of competitor rates
-    data_fe["avg_comp_rate"] = data_fe[comp_rate_cols].sum(axis=1).fillna(0)
-    data_fe["avg_comp_inv"] = data_fe[comp_inv_cols].sum(axis=1).fillna(0)
-    data_fe["avg_comp_rate_percent_diff"] = data_fe[comp_rate_diff_cols].mean(axis=1).fillna(0)
-    
-    # Locational features
-    data_fe["customer_hotel_country_equal"] = (data_fe["prop_country_id"] == data_fe["visitor_location_country_id"])
-
+def data_transformation(data):
+    logger.debug("Running data transformations")
     # Convert boolean features generated to int8
-    for col in data_fe.select_dtypes(include=['bool']).columns:
-         data_fe[col] = data_fe[col].astype(cp.int8)
+    for col in data.select_dtypes(include=['bool']).columns:
+         data[col] = data[col].astype(cp.int8)
 
-    logger.debug("Feature engineering finished")
-    return data_fe
-
-
-def get_imputation_values_cudf(train_data):
-    logger.debug("Calculating imputation values")
-    impute_values = {}
-    impute_values["visitor_hist_starrating"] = train_data["visitor_hist_starrating"].dropna().median()
-    impute_values["visitor_hist_adr_usd"] = train_data["visitor_hist_adr_usd"].dropna().median()
-    impute_values["prop_review_score"] = 0.0
-    impute_values["prop_location_score2"] = 0.0
-    impute_values["srch_query_affinity_score"] = train_data["srch_query_affinity_score"].dropna().min() 
-    impute_values["orig_destination_distance"] = train_data["orig_destination_distance"].dropna().median() 
-    impute_values["price_usd_cap"] = 20000.0
-    impute_values["price_usd_median"] = train_data["price_usd"].dropna().median()
-
-    for x in range(1, 9):
-        for suffix in ["rate", "inv", "rate_percent_diff"]:
-            impute_key = f"comp{x}_{suffix}"
-            impute_values[impute_key] = 0.0
-            try:
-                numeric_col = cudf.to_numeric(train_data[impute_key])
-                median_val = float(numeric_col.dropna().median())
-                if not np.isnan(median_val):
-                    impute_values[impute_key] = median_val
-            except Exception as e:
-                logger.warning(f"Could not calculate median for {impute_key}: {e}. Using 0")
-
-    # Ensure all impute values are float
-    for k, v in impute_values.items():
-        if pd.isna(v):
-            logger.warning(f"Imputation value for {k} is NaN, setting to 0.")
-            impute_values[k] = 0.0
-    logger.debug("Imputation values calculated.")
-    return impute_values
-
-def apply_imputation_cudf(data, impute_values):
-    logger.debug("Applying imputation")
-    df = data.copy()
-
-    # Apply pre-calculated imputation values
-    df["visitor_hist_starrating"] = df["visitor_hist_starrating"].fillna(impute_values["visitor_hist_starrating"])
-    df["visitor_hist_adr_usd"] = df["visitor_hist_adr_usd"].fillna(impute_values["visitor_hist_adr_usd"])
-    df["prop_review_score"] = df["prop_review_score"].fillna(impute_values["prop_review_score"])
-    df["prop_location_score2"] = df["prop_location_score2"].fillna(impute_values["prop_location_score2"])
-    df["srch_query_affinity_score"] = df["srch_query_affinity_score"].fillna(impute_values["srch_query_affinity_score"])
-    df["orig_destination_distance"] = df["orig_destination_distance"].fillna(impute_values["orig_destination_distance"])
-
-    for x in range(1, 9):
-         for suffix in ["rate", "inv", "rate_percent_diff"]:
-             col = f"comp{x}_{suffix}"
-             impute_key = f"comp{x}_{suffix}"
-             df[col] = df[col].fillna(impute_values[impute_key])
-
-    df["price_usd"] = df["price_usd"].fillna(impute_values["price_usd_median"])
-    df["price_usd"] = df["price_usd"].clip(upper=impute_values["price_usd_cap"])
-
-    logger.debug("Imputation finished.")
-    return df
-
-def transform_data_cudf(data):
-    logger.debug("Transforming datetime")
-    dt_col = cudf.to_datetime(data['date_time'])
-    data['date_time_epoch'] = (dt_col.astype('int64') // 10**9) # Convert to epoch
-    data = data.drop(columns=['date_time'])
-    logger.debug("Datetime transformation finished.")
+    # logger.debug("Transforming datetime")
+    # dt_col = cudf.to_datetime(data['date_time'])
+    # data['date_time_epoch'] = (dt_col.astype('int64') // 10**9) # Convert to epoch
+    # data = data.drop(columns=['date_time'])
+    # logger.debug("Datetime transformation finished.")
     return data
 
-# --- Preprocessing Pipeline Execution (GPU) ---
-logger.info("Starting preprocessing pipeline (GPU)...")
+# --- Preprocessing Pipeline Execution ---
+logger.info("Starting preprocessing pipeline (GPU)")
+impute_values = get_imputation_values(df)
 
-impute_values = get_imputation_values_cudf(df)
-
-df = transform_data_cudf(df)
-df = apply_imputation_cudf(df, impute_values)
+df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
+df = data_transformation(df)
 
 df_test_ids = df_test[['srch_id', 'prop_id']].copy()
-df_test = transform_data_cudf(df_test)
-df_test = apply_imputation_cudf(df_test, impute_values)
+df_test = apply_imputation(df_test, impute_values)
 df_test = feature_engineering(df_test)
+df_test = data_transformation(df_test)
 
 logger.info("Preprocessing pipeline finished.")
 
 # --- Target and Feature Selection ---
-target_value = "click_bool"
-exclude_values = ["booking_bool", "position", "gross_bookings_usd", "srch_id", "prop_id"]
-exclude_values_filtered = ["".join(c if c.isalnum() else "_" for c in str(x)) for x in exclude_values]
-exclude_values_for_X = [target_value] + exclude_values_filtered
+target_value = "booking_bool"
+exclude_values = [target_value] + ["click_bool", "position", "gross_bookings_usd"]
+target_col = df[target_value]
 
-feature_cols_final = [col for col in df.columns if col in df_test.columns and col not in exclude_values_for_X]
-
-X = df[feature_cols_final].copy()
+X = df.drop(columns=exclude_values)
 y = df[target_value].astype(DATA_PRECISION).copy()
+feature_cols_final = [col for col in df.columns if col in df_test.columns and col not in exclude_values]
 X_kaggle_test = df_test[feature_cols_final].copy()
 
 # Added because there were some memory issues.
