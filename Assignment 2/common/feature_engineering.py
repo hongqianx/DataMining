@@ -8,8 +8,18 @@ def feature_engineering(data):
     # Feature for total number of adults and children
     data["total_people"] = data["srch_adults_count"] + data["srch_children_count"]
     
-    # Total price per night
-    data["price_per_night"] = data["price_usd"] / data["srch_length_of_stay"]
+    # log transform price, min price is 0, so we use log(x+1)
+    data['visitor_hist_adr_usd_log'] = np.log1p(data['visitor_hist_adr_usd'])
+    data.drop(columns=['visitor_hist_adr_usd'], inplace=True)
+    
+    # Total price per night per room
+    data['price_1room_1night'] = (data['price_usd'] / data['srch_room_count']) / data['srch_length_of_stay']
+    data.drop(columns=['price_usd'], inplace=True)
+    # Filter out high prices
+    data = data[data['price_1room_1night'] < 150000].copy()
+    # log transform
+    data['price_1room_1night_log'] = np.log1p(data['price_1room_1night'])
+    data.drop(columns=['price_1room_1night'], inplace=True)
 
     # History differences
     data["history_starrating_diff"] = data["visitor_hist_starrating"] - data["prop_starrating"]
@@ -22,11 +32,18 @@ def feature_engineering(data):
     data["avg_comp_rate_percent_diff"] = data[["comp1_rate_percent_diff", "comp2_rate_percent_diff", "comp3_rate_percent_diff", "comp4_rate_percent_diff", "comp5_rate_percent_diff", "comp6_rate_percent_diff", "comp7_rate_percent_diff", "comp8_rate_percent_diff"]].median(axis=1)
 
     # Locational features
-    data["customer_hotel_country_equal"] = data["prop_country_id"] == data["visitor_location_country_id"]
+    data["domestic_travel_bool"] = data["prop_country_id"] == data["visitor_location_country_id"]
+
+    # switch id columns to string
+    cols_to_string = ['srch_id', 'site_id', 'visitor_location_country_id','prop_country_id','prop_id',\
+                       'srch_destination_id']
+    data[cols_to_string] = data[cols_to_string].astype('string')
     
     # drop original competitor columns
     for x in range(1, 9):
         data.drop(columns=[f"comp{x}_rate", f"comp{x}_inv", f"comp{x}_rate_percent_diff"], inplace=True, errors='ignore')
+
+    data.drop(columns=['srch_id','prop_id','srch_destination_id'], inplace=True, errors='ignore')
     
     logger.debug("Feature engineering completed")
     return data
