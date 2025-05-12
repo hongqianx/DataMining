@@ -33,7 +33,7 @@ HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
-ENSEMBLE_N_ESTIMATORS = 1 # Number of estimators for the final stacking model
+ENSEMBLE_N_ESTIMATORS = 2 # Number of estimators for the final stacking model
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -267,7 +267,7 @@ if y_test is not None:
 
 # Transform results to proper submission format
 logger.info("Preparing Kaggle test set for final prediction")
-df_test_submission_features = df_test[X.columns] # Ensure df_test is preprocessed and X.columns are training features
+df_test_submission_features = df_test[X.columns]
 logger.info("Generating predictions on Kaggle test set")
 kaggle_predictions = stacking_model.predict(df_test_submission_features)
 logger.info("Predictions for Kaggle test set generated.")
