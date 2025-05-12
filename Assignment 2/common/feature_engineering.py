@@ -1,5 +1,9 @@
 from common.helpers import logger
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
+
+# --- Consntants ---
+MAX_PRICE_NIGHT = 150000
 
 # Generate additional features that may be useful for the model
 def feature_engineering(data):
@@ -7,24 +11,26 @@ def feature_engineering(data):
 
     # Feature for total number of adults and children
     data["total_people"] = data["srch_adults_count"] + data["srch_children_count"]
-    
-    # log transform price, min price is 0, so we use log(x+1)
-    data['visitor_hist_adr_usd_log'] = np.log1p(data['visitor_hist_adr_usd'])
-    data.drop(columns=['visitor_hist_adr_usd'], inplace=True)
-    
-    # Total price per night per room
-    data['price_1room_1night'] = (data['price_usd'] / data['srch_room_count']) / data['srch_length_of_stay']
-    data.drop(columns=['price_usd'], inplace=True)
-    # Filter out high prices
-    data = data[data['price_1room_1night'] < 150000].copy()
-    # log transform
-    data['price_1room_1night_log'] = np.log1p(data['price_1room_1night'])
-    data.drop(columns=['price_1room_1night'], inplace=True)
 
     # History differences
     data["history_starrating_diff"] = data["visitor_hist_starrating"] - data["prop_starrating"]
     data["history_adr_diff"] = data["visitor_hist_adr_usd"] - data["price_usd"]
     data["price_history_difference"] = data["prop_log_historical_price"] - np.log1p(data["price_usd"])
+
+    # Total price per night per room
+    data['price_1room_1night'] = (data['price_usd'] / data['srch_room_count']) / data['srch_length_of_stay']
+    data.drop(columns=['price_usd'], inplace=True)
+
+    # Filter out high prices
+    data = data[data['price_1room_1night'] < MAX_PRICE_NIGHT].copy()
+
+    # log transform
+    data['price_1room_1night_log'] = np.log1p(data['price_1room_1night'])
+    data.drop(columns=['price_1room_1night'], inplace=True)
+
+    # log transform price, min price is 0, so we use log(x+1)
+    data['visitor_hist_adr_usd_log'] = np.log1p(data['visitor_hist_adr_usd'])
+    data.drop(columns=['visitor_hist_adr_usd'], inplace=True)
 
     # Transformations of competitor rates
     data["avg_comp_rate"] = data[["comp1_rate", "comp2_rate", "comp3_rate", "comp4_rate", "comp5_rate", "comp6_rate", "comp7_rate", "comp8_rate"]].sum(axis=1)
@@ -34,10 +40,12 @@ def feature_engineering(data):
     # Locational features
     data["domestic_travel_bool"] = data["prop_country_id"] == data["visitor_location_country_id"]
 
-    # switch id columns to string
-    cols_to_string = ['srch_id', 'site_id', 'visitor_location_country_id','prop_country_id','prop_id',\
-                       'srch_destination_id']
-    data[cols_to_string] = data[cols_to_string].astype('string')
+    # Transform columns to unique category labels
+    cols_to_encode = ['srch_id', 'site_id', 'visitor_location_country_id',
+                    'prop_country_id', 'prop_id', 'srch_destination_id']
+    le = LabelEncoder()
+    for col in cols_to_encode:
+        data[col] = le.fit_transform(data[col].astype(str))
     
     # drop original competitor columns
     for x in range(1, 9):

@@ -27,7 +27,6 @@ test_data = r"../input/test_set_VU_DM.csv"
 df = pd.read_csv(training_data)
 df_test = pd.read_csv(test_data)
 
-
 # --- Preprocessing Pipeline Execution ---
 logger.info("Starting preprocessing pipeline")
 
