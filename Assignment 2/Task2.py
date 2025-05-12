@@ -55,11 +55,12 @@ def feature_engineering(data):
     # History differences
     data["history_starrating_diff"] = data["visitor_hist_starrating"] - data["prop_starrating"]
     data["history_adr_diff"] = data["visitor_hist_adr_usd"] - data["price_usd"]
+    data["price_history_difference"] = data["prop_log_historical_price"] - np.log1p(data["price_usd"])
 
     # Transformations of competitor rates
     data["avg_comp_rate"] = data[["comp1_rate", "comp2_rate", "comp3_rate", "comp4_rate", "comp5_rate", "comp6_rate", "comp7_rate", "comp8_rate"]].sum(axis=1)
     data["avg_comp_inv"] = data[["comp1_inv", "comp2_inv", "comp3_inv", "comp4_inv", "comp5_inv", "comp6_inv", "comp7_inv", "comp8_inv"]].sum(axis=1)
-    data["avg_comp_rate_percent_diff"] = data[["comp1_rate_percent_diff", "comp2_rate_percent_diff", "comp3_rate_percent_diff", "comp4_rate_percent_diff", "comp5_rate_percent_diff", "comp6_rate_percent_diff", "comp7_rate_percent_diff", "comp8_rate_percent_diff"]].mean(axis=1)
+    data["avg_comp_rate_percent_diff"] = data[["comp1_rate_percent_diff", "comp2_rate_percent_diff", "comp3_rate_percent_diff", "comp4_rate_percent_diff", "comp5_rate_percent_diff", "comp6_rate_percent_diff", "comp7_rate_percent_diff", "comp8_rate_percent_diff"]].median(axis=1)
 
     # Locational features
     data["customer_hotel_country_equal"] = data["prop_country_id"] == data["visitor_location_country_id"]
@@ -118,13 +119,14 @@ def apply_imputation(data, impute_values):
     df["srch_query_affinity_score"] = df["srch_query_affinity_score"].fillna(impute_values["srch_query_affinity_score"])
     df["orig_destination_distance"] = df["orig_destination_distance"].fillna(impute_values["orig_destination_distance"])
 
-    # drop original competitor columns
-    for x in range(1, 9):
-        df.drop(columns=[f"comp{x}_rate", f"comp{x}_inv", f"comp{x}_rate_percent_diff"], inplace=True, errors='ignore')
-
     df.loc[df["price_usd"] > impute_values["price_usd_cap"], "price_usd"] = impute_values["price_usd_median"]
 
     return df
+
+def remove_original_transformed_columns(data):
+    # drop original competitor columns
+    for x in range(1, 9):
+        data.drop(columns=[f"comp{x}_rate", f"comp{x}_inv", f"comp{x}_rate_percent_diff"], inplace=True, errors='ignore')
 
 def transform_data(data):
     data['date_time_epoch'] = pd.to_datetime(data['date_time']).apply(lambda x: x.timestamp())
@@ -138,14 +140,16 @@ impute_values = get_imputation_values(df)
 df = transform_data(df)
 df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
+df = remove_original_transformed_columns(df)
 
 # NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
 df_test = transform_data(df_test)
 df_test = apply_imputation(df_test, impute_values)
 df_test = feature_engineering(df_test)
+df_test = remove_original_transformed_columns(df)
 
-target_value = "click_bool"
-exclude_values = [target_value] + ["booking_bool", "position", "gross_bookings_usd"]
+target_value = "booking_bool"
+exclude_values = [target_value] + ["click_bool", "position", "gross_bookings_usd"]
 target_col = df[target_value]
 
 # Retrieve the data into training and testing sets (splitting is already done)
