@@ -57,8 +57,8 @@ def feature_engineering(data):
     data["history_adr_diff"] = data["visitor_hist_adr_usd"] - data["price_usd"]
 
     # Transformations of competitor rates
-    data["avg_comp_rate"] = data[["comp1_rate", "comp2_rate", "comp3_rate", "comp4_rate", "comp5_rate", "comp6_rate", "comp7_rate", "comp8_rate"]].mean(axis=1)
-    data["avg_comp_inv"] = data[["comp1_inv", "comp2_inv", "comp3_inv", "comp4_inv", "comp5_inv", "comp6_inv", "comp7_inv", "comp8_inv"]].mean(axis=1)
+    data["avg_comp_rate"] = data[["comp1_rate", "comp2_rate", "comp3_rate", "comp4_rate", "comp5_rate", "comp6_rate", "comp7_rate", "comp8_rate"]].sum(axis=1)
+    data["avg_comp_inv"] = data[["comp1_inv", "comp2_inv", "comp3_inv", "comp4_inv", "comp5_inv", "comp6_inv", "comp7_inv", "comp8_inv"]].sum(axis=1)
     data["avg_comp_rate_percent_diff"] = data[["comp1_rate_percent_diff", "comp2_rate_percent_diff", "comp3_rate_percent_diff", "comp4_rate_percent_diff", "comp5_rate_percent_diff", "comp6_rate_percent_diff", "comp7_rate_percent_diff", "comp8_rate_percent_diff"]].mean(axis=1)
 
     # Locational features

@@ -81,8 +81,8 @@ def feature_engineering(data):
     comp_rate_diff_cols = [f"{c}_rate_percent_diff" for c in comp_cols_base if f"{c}_rate_percent_diff" in data_fe.columns]
 
     # Transformations of competitor rates
-    data_fe["avg_comp_rate"] = data_fe[comp_rate_cols].mean(axis=1).fillna(0)
-    data_fe["avg_comp_inv"] = data_fe[comp_inv_cols].mean(axis=1).fillna(0)
+    data_fe["avg_comp_rate"] = data_fe[comp_rate_cols].sum(axis=1).fillna(0)
+    data_fe["avg_comp_inv"] = data_fe[comp_inv_cols].sum(axis=1).fillna(0)
     data_fe["avg_comp_rate_percent_diff"] = data_fe[comp_rate_diff_cols].mean(axis=1).fillna(0)
     
     # Locational features
