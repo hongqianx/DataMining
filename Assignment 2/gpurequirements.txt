@@ -1,0 +1,11 @@
+#pip install --extra-index-url=https://pypi.nvidia.com -r gpurequirements.txt
+# conda install nvidia/label/cudnn-9.10.0::cudnn
+# conda install cudnn cuda-version=<cuda-major-version> -c nvidia
+# pip install lightgbm --config-settings=cmake.define.USE_CUDA=ON
+cudf-cu12
+cuml-cu12
+tensorflow==2.19.0
+keras==3.5.0
+cupy-cuda12x
+torch
+nvidia-cudnn-cu12

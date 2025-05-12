@@ -43,7 +43,7 @@ FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10
 OPTUNA_TRIALS = 1
 ENSEMBLE_N_ESTIMATORS = 10 # Estimators for final ensemble model
-TRAIN_WITHOUT_EVALUATION = True
+TRAIN_WITHOUT_EVALUATION = False
 RANDOM_STATE = 42
 DATA_PRECISION = cp.float32 # For GPU handling
 
@@ -283,9 +283,9 @@ def hyperOptimization(trial, model_name):
         try:
             if model_name == 'lgbm':
                 # Use cupy arrays for lgb dataset
-                X_train_cp = X_train_cv.to_cupy()
-                y_train_cp = y_train_cv.to_cupy()
-                X_val_cp = X_val_cv.to_cupy() 
+                X_train_cp = X_train_cv
+                y_train_cp = y_train_cv
+                X_val_cp = X_val_cv
 
                 lgb_train_data = lgb.Dataset(X_train_cp, label=y_train_cp)
                 model = lgb.train(params, lgb_train_data, num_boost_round=num_boost_round)
@@ -314,7 +314,7 @@ def hyperOptimization(trial, model_name):
                  raise ValueError(f"Training logic missing for {model_name}")
 
             end_time = dt.datetime.now()
-            logger.debug(f"Fold {fold_idx+1} native fit duration: {end_time - start_time}")
+            logger.debug(f"Fold {fold_idx+1} fit duration: {end_time - start_time}")
 
             y_pred_cp = cp.asarray(y_pred)
             y_val_cp = y_val_cv.values if isinstance(y_val_cv, cudf.Series) else cp.asarray(y_val_cv)
@@ -352,7 +352,8 @@ best_params_dict = {}
 
 for model_name in models_to_optimize:
     logger.info(f"--- Optimizing {model_name} ---")
-    study = optuna.create_study(direction='minimize')
+    pruner = optuna.pruners.MedianPruner(n_warmup_steps=3, n_startup_trials=3)
+    study = optuna.create_study(direction='minimize', pruner=pruner)
     logger.info(f"Starting Optuna study for {model_name} with {OPTUNA_TRIALS} trials.")
 
     try:
@@ -382,10 +383,13 @@ for model_name in models_to_optimize:
             dtrain = xgb.DMatrix(x_train, label=y_train)
             final_model = xgb.train(params, dtrain, num_boost_round=num_boost_round)
         elif model_name == 'lgbm':
-            params = {'objective': 'regression_l2', 'metric': 'rmse', 'device_type': 'cuda', 'verbosity': -1, 'random_state': RANDOM_STATE, 'n_jobs': 1}
+            params = {'objective': 'regression_l2', 'metric': 'rmse', 'device_type': 'gpu', 'verbosity': -1, 'random_state': RANDOM_STATE, 'n_jobs': 1}
             params.update(current_best_params)
             num_boost_round = params.pop('n_estimators', 100)
-            lgb_train_data = lgb.Dataset(x_train.to_cupy().get(), label=y_train.to_cupy().get())
+
+            x_train_cp = x_train.to_cupy()
+            y_train_cp = y_train.to_cupy()
+            lgb_train_data = lgb.Dataset(data=x_train_cp, label=y_train_cp)
 
             # TODO Cuda not working for lgbm
             final_model = lgb.train(params, lgb_train_data, num_boost_round=num_boost_round)
@@ -424,7 +428,6 @@ if not best_trained_models:
 logger.info(f"--- Building ensemble with {len(best_trained_models)} base models ---")
 
 meta_features_train_list = []
-y_train_cp = y_train.values if isinstance(y_train, cudf.Series) else cp.asarray(y_train)
 
 for name, model in best_trained_models:
     logger.debug(f"Predicting with base model: {name} on training data")
@@ -453,7 +456,7 @@ del meta_features_train_list
 logger.info(f"Training meta-features shape: {meta_features_train.shape}")
 
 # Define and train the final ensemble
-final_estimator = cuMLRandomForestRegressor(
+ensemble_model = cuMLRandomForestRegressor(
     n_estimators=ENSEMBLE_N_ESTIMATORS,
     max_depth=10,
     min_samples_split=5,
@@ -463,7 +466,7 @@ final_estimator = cuMLRandomForestRegressor(
 
 logger.info("Training final estimator using combined models")
 start_time = dt.datetime.now()
-final_estimator.fit(meta_features_train, y_train_cp)
+ensemble_model.fit(meta_features_train, y_train_cp)
 end_time = dt.datetime.now()
 logger.info(f"Final estimator trained in {end_time - start_time}.")
 
@@ -505,15 +508,15 @@ if not TRAIN_WITHOUT_EVALUATION and x_val is not None and y_val is not None:
     logger.info(f"Validation meta-features shape: {meta_features_val.shape}")
 
     logger.info("Predicting with final estimator on validation meta-features...")
-    stacking_predictions_val = final_estimator.predict(meta_features_val)
+    stacking_predictions_val = ensemble_model.predict(meta_features_val)
 
     stacking_rmse = cp.sqrt(mean_squared_error(y_val_cp, stacking_predictions_val))
     stacking_mae = mean_absolute_error(y_val_cp, stacking_predictions_val)
     stacking_r2 = r2_score(y_val_cp, stacking_predictions_val)
 
-    logger.info(f"Validation RMSE: {stacking_rmse.item():.5f}")
-    logger.info(f"Validation MAE: {stacking_mae.item():.5f}")
-    logger.info(f"Validation R²: {stacking_r2.item():.5f}")
+    logger.info(f"Validation RMSE: {stacking_rmse}")
+    logger.info(f"Validation MAE: {stacking_mae}")
+    logger.info(f"Validation R²: {stacking_r2}")
 
     try:
         y_val_np = cp.asnumpy(y_val_cp)
@@ -564,7 +567,7 @@ meta_features_kaggle = cp.column_stack(meta_features_kaggle_list)
 del meta_features_kaggle_list
 
 logger.info("Predicting with final ensemble on Kaggle test dataset")
-kaggle_predictions_gpu = final_estimator.predict(meta_features_kaggle)
+kaggle_predictions_gpu = ensemble_model.predict(meta_features_kaggle)
 
 kaggle_predictions_np = cp.asnumpy(kaggle_predictions_gpu)
 logger.info("Kaggle predictions generated")
