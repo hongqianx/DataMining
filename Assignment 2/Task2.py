@@ -18,11 +18,11 @@ from common.imputation import get_imputation_values, apply_imputation
 HAS_GPU = False # has_nvidia_gpu() # False #HAS_GPU = cp.cuda.runtime.getDeviceCount() > 0
 FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
-OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
-ENSEMBLE_N_ESTIMATORS = 2 # Number of estimators for the final stacking model
+OPTUNA_TRIALS = 2 #20 # Number of trials for hyperparameter optimization
+ENSEMBLE_N_ESTIMATORS = 2 #50 # Number of estimators for the final stacking model
 TRAIN_WITHOUT_EVALUATION = False # If we should train without evaluation, gives more training data but can't output evaluation metrics
-TRAIN_DATA_PERCENTAGE = 0.05 # Percentage of train data to use for the training, 1 for everything (100%).
-TEST_DATA_PERCENTAGE = 0.05 # Percentage of test data to use for the training, 1 for everything (100%).
+TRAIN_DATA_PERCENTAGE = 0.02 # Percentage of train data to use for the training, 1 for everything (100%).
+TEST_DATA_PERCENTAGE = 0.02 # Percentage of test data to use for the training, 1 for everything (100%).
 
 # --- Load the data ---
 training_data_path = r"../input/training_set_VU_DM.csv"
@@ -70,24 +70,38 @@ kf = KFold(n_splits=FOLD_AMOUNT, shuffle=True, random_state=42)
 def hyperOptimization(trial, model_name):
     model_params = {
         'xgb': {
-            'learning_rate': trial.suggest_float('xgb_learning_rate', 1e-5, 1e-1, log=True),
-            'max_depth': trial.suggest_int('xgb_max_depth', 3, 12),
-            'n_estimators': trial.suggest_int('xgb_n_estimators', 50, 300)
+            'learning_rate': trial.suggest_float('xgb_learning_rate', 0.01, 0.2, log=True),
+            'max_depth': trial.suggest_int('xgb_max_depth', 3, 10),
+            'n_estimators': trial.suggest_int('xgb_n_estimators', 100, 800),
+            'subsample': trial.suggest_float('xgb_subsample', 0.6, 1.0),
+            'colsample_bytree': trial.suggest_float('xgb_colsample_bytree', 0.6, 1.0),
+            'gamma': trial.suggest_float('xgb_gamma', 0, 0.5),
+            'reg_alpha': trial.suggest_float('xgb_reg_alpha', 1e-8, 1.0, log=True),
+            'reg_lambda': trial.suggest_float('xgb_reg_lambda', 1e-8, 1.0, log=True),
         },
         'lgbm': {
-            'learning_rate': trial.suggest_float('lgbm_learning_rate', 1e-5, 1e-1, log=True),
-            'num_leaves': trial.suggest_int('lgbm_num_leaves', 30, 150),
-            'n_estimators': trial.suggest_int('lgbm_n_estimators', 50, 300)
+            'learning_rate': trial.suggest_float('lgbm_learning_rate', 0.01, 0.2, log=True),
+            'num_leaves': trial.suggest_int('lgbm_num_leaves', 30, 200),
+            'n_estimators': trial.suggest_int('lgbm_n_estimators', 100, 800),
+            'max_depth': trial.suggest_int('lgbm_max_depth', 4, 10),
+            'subsample': trial.suggest_float('lgbm_subsample', 0.6, 1.0), 
+            'colsample_bytree': trial.suggest_float('lgbm_colsample_bytree', 0.6, 1.0),
+            'reg_alpha': trial.suggest_float('lgbm_reg_alpha', 1e-8, 1.0, log=True),
+            'reg_lambda': trial.suggest_float('lgbm_reg_lambda', 1e-8, 1.0, log=True),
         },
-        'rf': {
-            'n_estimators': trial.suggest_int('rf_n_estimators', 50, 300),
-            'max_depth': trial.suggest_int('rf_max_depth', 3, 12),
-            'min_samples_split': trial.suggest_int('rf_min_samples_split', 2, 10)
+        'rf': { # RandomForest
+            'n_estimators': trial.suggest_int('rf_n_estimators', 100, 500),
+            'max_depth': trial.suggest_int('rf_max_depth', 5, 25),
+            'min_samples_split': trial.suggest_int('rf_min_samples_split', 2, 20),
+            'min_samples_leaf': trial.suggest_int('rf_min_samples_leaf', 1, 20),
+            'max_features': trial.suggest_categorical('rf_max_features', ['sqrt', 'log2', 0.7, None]),
         },
         'catboost': {
-            'iterations': trial.suggest_int('catboost_iterations', 100, 1000),
-            'learning_rate': trial.suggest_float('catboost_learning_rate', 1e-5, 1e-1, log=True),
-            'depth': trial.suggest_int('catboost_depth', 3, 12)
+            'iterations': trial.suggest_int('catboost_iterations', 100, 800),
+            'learning_rate': trial.suggest_float('catboost_learning_rate', 0.01, 0.2, log=True),
+            'depth': trial.suggest_int('catboost_depth', 4, 10),
+            'l2_leaf_reg': trial.suggest_float('catboost_l2_leaf_reg', 1, 10, log=True),
+            'border_count': trial.suggest_int('catboost_border_count', 32, 255),
         }
     }
 
@@ -125,7 +139,7 @@ def create_model(model_name, params):
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
-models = ['xgb', 'lgbm', 'rf', 'catboost']
+models = ['lgbm', 'rf', 'xgb', 'catboost']
 
 # TODO Maybe use Neural network ensemble
 

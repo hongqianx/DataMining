@@ -1,0 +1,2 @@
+Ensemble model accuracy = 90.9, score = 0.19
+Random forest model accuracy = rf, Cross-Validated RMSE: 0.1622598334410447 score = 0.335
