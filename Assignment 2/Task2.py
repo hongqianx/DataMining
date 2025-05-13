@@ -1,6 +1,7 @@
 import numpy as np
 import optuna
 import pandas as pd
+import numpy as np
 # import cupy as cp
 import datetime as dt
 from sklearn.ensemble import StackingRegressor, RandomForestRegressor
@@ -9,7 +10,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_sc
 from sklearn.model_selection import KFold, train_test_split
 from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
-from common.helpers import logger, has_nvidia_gpu
+from common.helpers import logger, has_nvidia_gpu, display_feature_importances
 from common.feature_engineering import feature_engineering
 from common.imputation import get_imputation_values, apply_imputation
 
@@ -19,13 +20,15 @@ FOLD_AMOUNT = 3
 TESTSPLIT_RATIO = 10 # Percentage of data to be used for testing
 OPTUNA_TRIALS = 1 # Number of trials for hyperparameter optimization
 ENSEMBLE_N_ESTIMATORS = 2 # Number of estimators for the final stacking model
-TRAIN_WITHOUT_EVALUATION = True # If we should train without evaluation, gives more training data but can't output evaluation metrics
+TRAIN_WITHOUT_EVALUATION = False # If we should train without evaluation, gives more training data but can't output evaluation metrics
+TRAIN_DATA_PERCENTAGE = 0.05 # Percentage of train data to use for the training, 1 for everything (100%).
+TEST_DATA_PERCENTAGE = 0.05 # Percentage of test data to use for the training, 1 for everything (100%).
 
 # --- Load the data ---
 training_data_path = r"../input/training_set_VU_DM.csv"
 test_data_path = r"../input/test_set_VU_DM.csv"
-df = pd.read_csv(training_data_path)
-df_test = pd.read_csv(test_data_path)
+df = pd.read_csv(training_data_path).sample(frac=TRAIN_DATA_PERCENTAGE, random_state=42)
+df_test = pd.read_csv(test_data_path).sample(frac=TEST_DATA_PERCENTAGE, random_state=42)
 
 # --- Preprocessing Pipeline Execution ---
 logger.info("Starting preprocessing pipeline")
@@ -113,25 +116,28 @@ def hyperOptimization(trial, model_name):
 def create_model(model_name, params):
     if HAS_GPU:
         if model_name == 'xgb': return XGBRegressor(device = "cuda", tree_method="hist", **params)
-        elif model_name == 'lgbm': return LGBMRegressor(device_type="gpu", **params)
+        elif model_name == 'lgbm': return LGBMRegressor(device_type="gpu", **params, n_jobs=-1)
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(task_type="GPU", **params, verbose=0)
     else:
-        if model_name == 'xgb': return XGBRegressor(**params)
-        elif model_name == 'lgbm': return LGBMRegressor(**params)
+        if model_name == 'xgb': return XGBRegressor(**params, n_jobs=-1)
+        elif model_name == 'lgbm': return LGBMRegressor(**params, n_jobs=-1)
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
 models = ['xgb', 'lgbm', 'rf', 'catboost']
 
-# TODO below is work in progress
-# TODO use Neural network ensemble
+# TODO Maybe use Neural network ensemble
+
+model_performance_rmse = {}
 best_models = []
 for model_name in models:
     study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner())
     study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=OPTUNA_TRIALS)
 
     logger.info(f"Best hyperparameters for {model_name}: {study.best_params}")
+
+    model_performance_rmse[model_name] = study.best_value
 
     # Only append parameters of own model (default adds all)
     prefix = model_name + "_"
@@ -150,10 +156,23 @@ for model_name in models:
     best_models.append((model_name, best_model))
     logger.info(f"Model (best) {model_name} trained successfully")
 
+    feature_column_names = x_train.columns.tolist()
+    display_feature_importances(best_model, feature_column_names, model_name)
+
 stacking_model = StackingRegressor(
     estimators=[(name, model) for name, model in best_models],
     final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
 )
+
+model_list = list(model_performance_rmse.items())
+
+def get_rmse_value(item_tuple):
+    return item_tuple[1]
+
+model_list.sort(key=get_rmse_value) 
+
+for model_name, rmse in model_list:
+    logger.info(f"Model: {model_name}, RMSE: {rmse:.5f}")
 
 logger.info(f"Training ensemble model with {len(best_models)} base models")
 logger.info(f"Using the following data types for x: {x_train.dtypes} and for y: {y_train.dtypes}")
