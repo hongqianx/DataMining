@@ -1,2 +1,26 @@
 Ensemble model accuracy = 90.9, score = 0.19
+
 Random forest model accuracy = rf, Cross-Validated RMSE: 0.1622598334410447 score = 0.335
+Xgb, Cross-Validated RMSE: 0.16497813779270018
+
+
+
+
+Ensemble model RMSE: 0.20417354006513655
+2025-05-13 17:50:19,060 - INFO - Test MAE: 0.0565
+2025-05-13 17:50:19,060 - INFO - Test MSE: 0.0417
+2025-05-13 17:50:19,060 - INFO - Test R²: -0.5831
+2025-05-13 17:50:19,060 - INFO - Test Accuracy: 91.70%
+
+
+
+2025-05-13 19:57:43,704 - INFO - Model: lgbm, RMSE: 0.16180
+2025-05-13 19:57:43,704 - INFO - Model: rf, RMSE: 0.16211
+2025-05-13 19:57:43,704 - INFO - Model: catboost, RMSE: 0.16494
+2025-05-13 19:57:43,704 - INFO - Model: xgb, RMSE: 0.16498
+2025-05-13 19:57:43,704 - INFO - Training ensemble model with 4 base models
+
+2025-05-13 20:53:02,203 - INFO - Model: catboost, RMSE: 0.16459
+2025-05-13 20:53:02,203 - INFO - Model: xgb, RMSE: 0.16481
+2025-05-13 20:53:02,203 - INFO - Model: rf, RMSE: 0.16527
+2025-05-13 20:53:02,203 - INFO - Model: lgbm, RMSE: 0.16587
