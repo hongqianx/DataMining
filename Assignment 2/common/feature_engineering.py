@@ -41,7 +41,7 @@ def feature_engineering(data):
     data["domestic_travel_bool"] = data["prop_country_id"] == data["visitor_location_country_id"]
 
     # Transform columns to unique category labels
-    cols_to_encode = ['srch_id', 'site_id', 'visitor_location_country_id',
+    cols_to_encode = ['site_id', 'visitor_location_country_id',
                     'prop_country_id', 'prop_id', 'srch_destination_id']
     le = LabelEncoder()
     for col in cols_to_encode:
@@ -51,7 +51,7 @@ def feature_engineering(data):
     for x in range(1, 9):
         data.drop(columns=[f"comp{x}_rate", f"comp{x}_inv", f"comp{x}_rate_percent_diff"], inplace=True, errors='ignore')
 
-    data.drop(columns=['srch_id','prop_id','srch_destination_id'], inplace=True, errors='ignore')
+    data.drop(columns=['srch_destination_id'], inplace=True, errors='ignore')
     
     logger.debug("Feature engineering completed")
     return data
