@@ -122,7 +122,7 @@ def create_model(model_name, params):
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
-models = ['xgb', 'lgbm', 'rf', 'catboost']
+models = ['rf']
 
 # TODO below is work in progress
 # TODO use Neural network ensemble
@@ -150,23 +150,25 @@ for model_name in models:
     best_models.append((model_name, best_model))
     logger.info(f"Model (best) {model_name} trained successfully")
 
-stacking_model = StackingRegressor(
-    estimators=[(name, model) for name, model in best_models],
-    final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
-)
+# stacking_model = StackingRegressor(
+#     estimators=[(name, model) for name, model in best_models],
+#     final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
+# )
 
 logger.info(f"Training ensemble model with {len(best_models)} base models")
 logger.info(f"Using the following data types for x: {x_train.dtypes} and for y: {y_train.dtypes}")
-stacking_model.fit(x_train, y_train)
+# stacking_model.fit(x_train, y_train)
 logger.info("Ensemble model trained successfully")
 
-stacking_predictions = stacking_model.predict(x_test)
+best_model.fit(x_train, y_train)
+
+# stacking_predictions = best_model.predict(x_test)
 
 # Transform results to proper submission format
 logger.info("Preparing Kaggle test set for final prediction")
 df_test_submission_features = df_test[X.columns]
 logger.info("Generating predictions on Kaggle test set")
-kaggle_predictions = stacking_model.predict(df_test_submission_features)
+kaggle_predictions = best_model.predict(df_test_submission_features)
 logger.info("Predictions for Kaggle test set generated.")
 
 def create_submission_file(original_test_dataframe, predictions_array, output_filename="submission.csv"):
@@ -185,9 +187,9 @@ def create_submission_file(original_test_dataframe, predictions_array, output_fi
 create_submission_file(df_test, kaggle_predictions, "my_kaggle_submission.csv")
 
 if y_test is not None:
-    stacking_rmse = np.sqrt(np.mean((stacking_predictions - y_test)**2))
+    stacking_rmse = np.sqrt(np.mean((best_model - y_test)**2))
     print(f"Ensemble model RMSE: {stacking_rmse}")
-    y_pred = stacking_model.predict(x_test)
+    y_pred = best_model.predict(x_test)
     y_pred_class = (y_pred >= 0.5).astype(int)
 
     mae = mean_absolute_error(y_test, y_pred)
