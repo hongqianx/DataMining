@@ -119,7 +119,7 @@ def create_model(model_name, params):
     else:
         if model_name == 'xgb': return XGBRegressor(**params)
         elif model_name == 'lgbm': return LGBMRegressor(**params)
-        elif model_name == 'rf': return RandomForestRegressor(**params)
+        elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
 models = ['xgb', 'lgbm', 'rf', 'catboost']
@@ -152,7 +152,7 @@ for model_name in models:
 
 stacking_model = StackingRegressor(
     estimators=[(name, model) for name, model in best_models],
-    final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS)
+    final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
 )
 
 logger.info(f"Training ensemble model with {len(best_models)} base models")
