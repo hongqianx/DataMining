@@ -42,7 +42,7 @@ def feature_engineering(data):
 
     # Transform columns to unique category labels
     cols_to_encode = ['site_id', 'visitor_location_country_id',
-                    'prop_country_id', 'prop_id', 'srch_destination_id']
+                    'prop_country_id', 'srch_destination_id']
     le = LabelEncoder()
     for col in cols_to_encode:
         data[col] = le.fit_transform(data[col].astype(str))
