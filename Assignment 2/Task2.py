@@ -113,12 +113,12 @@ def hyperOptimization(trial, model_name):
 def create_model(model_name, params):
     if HAS_GPU:
         if model_name == 'xgb': return XGBRegressor(device = "cuda", tree_method="hist", **params)
-        elif model_name == 'lgbm': return LGBMRegressor(device_type="gpu", **params)
+        elif model_name == 'lgbm': return LGBMRegressor(device_type="gpu", **params, n_jobs=-1)
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(task_type="GPU", **params, verbose=0)
     else:
         if model_name == 'xgb': return XGBRegressor(**params)
-        elif model_name == 'lgbm': return LGBMRegressor(**params)
+        elif model_name == 'lgbm': return LGBMRegressor(**params, n_jobs=-1)
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
