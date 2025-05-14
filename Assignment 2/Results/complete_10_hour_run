@@ -1,0 +1,237 @@
+2025-05-13 21:49:32,268 - INFO - Training lgbm on fold 1
+2025-05-13 21:49:32,701 - INFO - Start training of model lgbm, at time 2025-05-13 21:49:32.701921
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.063500 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3947
+[LightGBM] [Info] Number of data points in the train set: 3140286, number of used features: 31
+[LightGBM] [Info] Start training from score 0.027868
+2025-05-13 21:50:12,078 - INFO - End training of model lgbm, at time 2025-05-13 21:50:12.078556
+2025-05-13 21:50:16,330 - INFO - Training lgbm on fold 2
+2025-05-13 21:50:16,751 - INFO - Start training of model lgbm, at time 2025-05-13 21:50:16.751579
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.067377 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3943
+[LightGBM] [Info] Number of data points in the train set: 3140286, number of used features: 31
+[LightGBM] [Info] Start training from score 0.027897
+2025-05-13 21:50:58,689 - INFO - End training of model lgbm, at time 2025-05-13 21:50:58.689342
+2025-05-13 21:51:02,789 - INFO - Training lgbm on fold 3
+2025-05-13 21:51:03,252 - INFO - Start training of model lgbm, at time 2025-05-13 21:51:03.252470
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.062705 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3938
+[LightGBM] [Info] Number of data points in the train set: 3140286, number of used features: 31
+[LightGBM] [Info] Start training from score 0.027981
+2025-05-13 21:51:42,009 - INFO - End training of model lgbm, at time 2025-05-13 21:51:42.009307
+2025-05-13 21:51:46,168 - INFO - Model: lgbm, Cross-Validated RMSE: 0.16112506372915653
+[I 2025-05-13 21:51:46,172] Trial 19 finished with value: 0.16112506372915653 and parameters: {'xgb_learning_rate': 0.01689008039504573, 'xgb_max_depth': 8, 'xgb_n_estimators': 216, 'xgb_subsample': 0.7161526549787891, 'xgb_colsample_bytree': 0.7459805760908189, 'xgb_gamma': 0.19630981020962673, 'xgb_reg_alpha': 0.037358884999079044, 'xgb_reg_lambda': 0.019734135323157834, 'lgbm_learning_rate': 0.030321115968167375, 'lgbm_num_leaves': 129, 'lgbm_n_estimators': 385, 'lgbm_max_depth': 9, 'lgbm_subsample': 0.775035599102178, 'lgbm_colsample_bytree': 0.9309810466169193, 'lgbm_reg_alpha': 0.010866589530461736, 'lgbm_reg_lambda': 9.768176227422902e-07, 'rf_n_estimators': 174, 'rf_max_depth': 23, 'rf_min_samples_split': 17, 'rf_min_samples_leaf': 13, 'rf_max_features': None, 'catboost_iterations': 105, 'catboost_learning_rate': 0.014052137616011573, 'catboost_depth': 4, 'catboost_l2_leaf_reg': 4.227407757731602, 'catboost_border_count': 33}. Best is trial 16 with value: 0.16111108146541842.
+2025-05-13 21:51:46,178 - INFO - Best hyperparameters for lgbm: {'xgb_learning_rate': 0.031043720833611826, 'xgb_max_depth': 6, 'xgb_n_estimators': 190, 'xgb_subsample': 0.6962127426453717, 'xgb_colsample_bytree': 0.8063629348584204, 'xgb_gamma': 0.1629390144626949, 'xgb_reg_alpha': 0.01603818341202415, 'xgb_reg_lambda': 0.019441752113217255, 'lgbm_learning_rate': 0.020795609623216266, 'lgbm_num_leaves': 159, 'lgbm_n_estimators': 532, 'lgbm_max_depth': 9, 'lgbm_subsample': 0.8642843193962345, 'lgbm_colsample_bytree': 0.917130301129025, 'lgbm_reg_alpha': 3.533709174321018e-05, 'lgbm_reg_lambda': 7.093586561508768e-06, 'rf_n_estimators': 343, 'rf_max_depth': 22, 'rf_min_samples_split': 17, 'rf_min_samples_leaf': 13, 'rf_max_features': None, 'catboost_iterations': 125, 'catboost_learning_rate': 0.03378190609634383, 'catboost_depth': 9, 'catboost_l2_leaf_reg': 6.785368719324349, 'catboost_border_count': 53}
+2025-05-13 21:51:46,179 - INFO - Training lgbm with best hyperparameters
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.098681 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 3941
+[LightGBM] [Info] Number of data points in the train set: 4710429, number of used features: 32
+[LightGBM] [Info] Start training from score 0.027915
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+2025-05-13 21:53:09,100 - INFO - Model (best) lgbm trained successfully
+2025-05-13 21:53:09,115 - INFO - --- Top 15 Feature Importances for lgbm (Logged) ---
+2025-05-13 21:53:09,116 - INFO - 1. Feature: prop_location_score2, Importance: 10369.0000
+2025-05-13 21:53:09,116 - INFO - 2. Feature: prop_location_score1, Importance: 7607.0000
+2025-05-13 21:53:09,116 - INFO - 3. Feature: price_history_difference, Importance: 6956.0000
+2025-05-13 21:53:09,116 - INFO - 4. Feature: history_adr_diff, Importance: 6317.0000
+2025-05-13 21:53:09,116 - INFO - 5. Feature: prop_id, Importance: 5611.0000
+2025-05-13 21:53:09,116 - INFO - 6. Feature: prop_log_historical_price, Importance: 4150.0000
+2025-05-13 21:53:09,116 - INFO - 7. Feature: price_1room_1night_log, Importance: 3606.0000
+2025-05-13 21:53:09,116 - INFO - 8. Feature: srch_booking_window, Importance: 3363.0000
+2025-05-13 21:53:09,117 - INFO - 9. Feature: prop_country_id, Importance: 3331.0000
+2025-05-13 21:53:09,117 - INFO - 10. Feature: history_starrating_diff, Importance: 3018.0000
+2025-05-13 21:53:09,117 - INFO - 11. Feature: orig_destination_distance, Importance: 2987.0000
+2025-05-13 21:53:09,117 - INFO - 12. Feature: prop_review_score, Importance: 2873.0000
+2025-05-13 21:53:09,117 - INFO - 13. Feature: srch_id, Importance: 2252.0000
+2025-05-13 21:53:09,117 - INFO - 14. Feature: srch_query_affinity_score, Importance: 2113.0000
+2025-05-13 21:53:09,117 - INFO - 15. Feature: random_bool, Importance: 2023.0000
+2025-05-13 21:53:09,117 - INFO - ----------------------------------------------------
+2025-05-13 21:53:11,427 - INFO - Feature importance plot for lgbm saved to feature_importance_lgbm_all.png
+[I 2025-05-13 21:53:11,446] A new study created in memory with name: no-name-84f82364-0f94-4738-aee4-905de3543e74
+2025-05-13 21:53:11,628 - INFO - Training rf on fold 1
+2025-05-13 21:53:11,930 - INFO - Start training of model rf, at time 2025-05-13 21:53:11.930793
+2025-05-13 21:59:12,381 - INFO - End training of model rf, at time 2025-05-13 21:59:12.381624
+2025-05-13 21:59:15,547 - INFO - Training rf on fold 2
+2025-05-13 21:59:20,206 - INFO - Start training of model rf, at time 2025-05-13 21:59:20.206483
+2025-05-13 22:05:30,559 - INFO - End training of model rf, at time 2025-05-13 22:05:30.558025
+2025-05-13 22:05:34,555 - INFO - Training rf on fold 3
+2025-05-13 22:05:41,514 - INFO - Start training of model rf, at time 2025-05-13 22:05:41.514014
+2025-05-13 22:11:44,646 - INFO - End training of model rf, at time 2025-05-13 22:11:44.644364
+2025-05-13 22:11:48,629 - INFO - Model: rf, Cross-Validated RMSE: 0.16146099761538166
+[I 2025-05-13 22:11:48,724] Trial 0 finished with value: 0.16146099761538166 and parameters: {'xgb_learning_rate': 0.06321866947290444, 'xgb_max_depth': 8, 'xgb_n_estimators': 158, 'xgb_subsample': 0.7507449897023556, 'xgb_colsample_bytree': 0.9891776601850126, 'xgb_gamma': 0.09852702854566492, 'xgb_reg_alpha': 2.7501488977547745e-06, 'xgb_reg_lambda': 1.649819866129297e-05, 'lgbm_learning_rate': 0.021257037890267456, 'lgbm_num_leaves': 136, 'lgbm_n_estimators': 329, 'lgbm_max_depth': 7, 'lgbm_subsample': 0.9686557712320678, 'lgbm_colsample_bytree': 0.8233507121188458, 'lgbm_reg_alpha': 3.3528411503667757e-08, 'lgbm_reg_lambda': 3.758356735301476e-07, 'rf_n_estimators': 128, 'rf_max_depth': 16, 'rf_min_samples_split': 12, 'rf_min_samples_leaf': 1, 'rf_max_features': 0.7, 'catboost_iterations': 364, 'catboost_learning_rate': 0.031204073263912408, 'catboost_depth': 9, 'catboost_l2_leaf_reg': 2.5743922743900796, 'catboost_border_count': 221}. Best is trial 0 with value: 0.16146099761538166.
+2025-05-13 22:11:49,513 - INFO - Training rf on fold 1
+2025-05-13 22:11:57,844 - INFO - Start training of model rf, at time 2025-05-13 22:11:57.844355
+2025-05-13 22:13:38,693 - INFO - End training of model rf, at time 2025-05-13 22:13:38.692860
+2025-05-13 22:13:42,460 - INFO - Training rf on fold 2
+2025-05-13 22:13:47,849 - INFO - Start training of model rf, at time 2025-05-13 22:13:47.849242
+2025-05-13 22:15:31,085 - INFO - End training of model rf, at time 2025-05-13 22:15:31.085933
+2025-05-13 22:15:35,291 - INFO - Training rf on fold 3
+2025-05-13 22:15:40,575 - INFO - Start training of model rf, at time 2025-05-13 22:15:40.575208
+2025-05-13 22:17:23,854 - INFO - End training of model rf, at time 2025-05-13 22:17:23.854515
+2025-05-13 22:17:28,046 - INFO - Model: rf, Cross-Validated RMSE: 0.16140755866153103
+[I 2025-05-13 22:17:28,079] Trial 1 finished with value: 0.16140755866153103 and parameters: {'xgb_learning_rate': 0.031010936856204967, 'xgb_max_depth': 5, 'xgb_n_estimators': 538, 'xgb_subsample': 0.7926551914631179, 'xgb_colsample_bytree': 0.693454611241742, 'xgb_gamma': 0.18067900791477604, 'xgb_reg_alpha': 0.01082563192993781, 'xgb_reg_lambda': 0.00041024151044625145, 'lgbm_learning_rate': 0.012344990491196528, 'lgbm_num_leaves': 165, 'lgbm_n_estimators': 657, 'lgbm_max_depth': 9, 'lgbm_subsample': 0.8550316217776768, 'lgbm_colsample_bytree': 0.7676636381092531, 'lgbm_reg_alpha': 1.7650803679567592e-07, 'lgbm_reg_lambda': 6.701272049155635e-08, 'rf_n_estimators': 114, 'rf_max_depth': 20, 'rf_min_samples_split': 5, 'rf_min_samples_leaf': 10, 'rf_max_features': 'log2', 'catboost_iterations': 318, 'catboost_learning_rate': 0.011613044972972423, 'catboost_depth': 10, 'catboost_l2_leaf_reg': 1.6208292476737984, 'catboost_border_count': 160}. Best is trial 1 with value: 0.16140755866153103.
+2025-05-13 22:17:28,587 - INFO - Training rf on fold 1
+2025-05-13 22:17:36,402 - INFO - Start training of model rf, at time 2025-05-13 22:17:36.402171
+2025-05-13 22:19:22,850 - INFO - End training of model rf, at time 2025-05-13 22:19:22.849603
+2025-05-13 22:19:27,548 - INFO - Training rf on fold 2
+2025-05-13 22:19:35,488 - INFO - Start training of model rf, at time 2025-05-13 22:19:35.488329
+2025-05-13 22:21:21,753 - INFO - End training of model rf, at time 2025-05-13 22:21:21.752160
+2025-05-13 22:21:26,451 - INFO - Training rf on fold 3
+2025-05-13 22:21:33,676 - INFO - Start training of model rf, at time 2025-05-13 22:21:33.676480
+2025-05-13 22:23:22,913 - INFO - End training of model rf, at time 2025-05-13 22:23:22.912510
+2025-05-13 22:23:27,038 - INFO - Model: rf, Cross-Validated RMSE: 0.16139606048738045
+[I 2025-05-13 22:23:27,059] Trial 2 finished with value: 0.16139606048738045 and parameters: {'xgb_learning_rate': 0.018394383138560153, 'xgb_max_depth': 8, 'xgb_n_estimators': 191, 'xgb_subsample': 0.8601119909178785, 'xgb_colsample_bytree': 0.7139654413724023, 'xgb_gamma': 0.46562405771205817, 'xgb_reg_alpha': 0.6250362409792382, 'xgb_reg_lambda': 0.19745682480459004, 'lgbm_learning_rate': 0.1714526829867592, 'lgbm_num_leaves': 48, 'lgbm_n_estimators': 454, 'lgbm_max_depth': 10, 'lgbm_subsample': 0.9352272746649206, 'lgbm_colsample_bytree': 0.7805188490982116, 'lgbm_reg_alpha': 0.00019764728900664328, 'lgbm_reg_lambda': 0.49351727727927125, 'rf_n_estimators': 119, 'rf_max_depth': 21, 'rf_min_samples_split': 11, 'rf_min_samples_leaf': 20, 'rf_max_features': 'log2', 'catboost_iterations': 439, 'catboost_learning_rate': 0.0848723470296997, 'catboost_depth': 8, 'catboost_l2_leaf_reg': 3.349182874802283, 'catboost_border_count': 250}. Best is trial 2 with value: 0.16139606048738045.
+2025-05-13 22:23:27,792 - INFO - Training rf on fold 1
+2025-05-13 22:23:35,089 - INFO - Start training of model rf, at time 2025-05-13 22:23:35.089922
+2025-05-13 22:45:24,210 - INFO - End training of model rf, at time 2025-05-13 22:45:24.202529
+2025-05-13 22:45:35,506 - INFO - Training rf on fold 2
+2025-05-13 22:45:51,941 - INFO - Start training of model rf, at time 2025-05-13 22:45:51.938198
+2025-05-13 23:07:45,227 - INFO - End training of model rf, at time 2025-05-13 23:07:45.220145
+2025-05-13 23:08:01,425 - INFO - Training rf on fold 3
+2025-05-13 23:08:23,320 - INFO - Start training of model rf, at time 2025-05-13 23:08:23.318620
+2025-05-13 23:30:21,810 - INFO - End training of model rf, at time 2025-05-13 23:30:21.793958
+2025-05-13 23:30:37,471 - INFO - Model: rf, Cross-Validated RMSE: 0.16122992083465745
+[I 2025-05-13 23:30:38,018] Trial 3 finished with value: 0.16122992083465745 and parameters: {'xgb_learning_rate': 0.041467771651147046, 'xgb_max_depth': 3, 'xgb_n_estimators': 294, 'xgb_subsample': 0.7852790260040986, 'xgb_colsample_bytree': 0.6852508974929561, 'xgb_gamma': 0.1244500778635757, 'xgb_reg_alpha': 0.002341633373535192, 'xgb_reg_lambda': 1.456190304567246e-08, 'lgbm_learning_rate': 0.10466003602124123, 'lgbm_num_leaves': 181, 'lgbm_n_estimators': 233, 'lgbm_max_depth': 10, 'lgbm_subsample': 0.8551922721550034, 'lgbm_colsample_bytree': 0.7947070308482167, 'lgbm_reg_alpha': 6.727766512863928e-08, 'lgbm_reg_lambda': 0.009129486363936101, 'rf_n_estimators': 448, 'rf_max_depth': 18, 'rf_min_samples_split': 17, 'rf_min_samples_leaf': 17, 'rf_max_features': 0.7, 'catboost_iterations': 387, 'catboost_learning_rate': 0.1331012662841478, 'catboost_depth': 9, 'catboost_l2_leaf_reg': 7.994291948461683, 'catboost_border_count': 64}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-13 23:30:39,775 - INFO - Training rf on fold 1
+2025-05-13 23:31:02,654 - INFO - Start training of model rf, at time 2025-05-13 23:31:02.654248
+2025-05-13 23:44:51,079 - INFO - End training of model rf, at time 2025-05-13 23:44:51.077181
+2025-05-13 23:45:00,624 - INFO - Training rf on fold 2
+2025-05-13 23:45:19,484 - INFO - Start training of model rf, at time 2025-05-13 23:45:19.482368
+2025-05-13 23:59:17,215 - INFO - End training of model rf, at time 2025-05-13 23:59:17.201061
+2025-05-13 23:59:30,241 - INFO - Training rf on fold 3
+2025-05-13 23:59:57,970 - INFO - Start training of model rf, at time 2025-05-13 23:59:57.964056
+2025-05-14 00:14:36,658 - INFO - End training of model rf, at time 2025-05-14 00:14:36.656549
+2025-05-14 00:14:44,645 - INFO - Model: rf, Cross-Validated RMSE: 0.16138931163718742
+[I 2025-05-14 00:14:44,750] Trial 4 finished with value: 0.16138931163718742 and parameters: {'xgb_learning_rate': 0.04040358492481393, 'xgb_max_depth': 10, 'xgb_n_estimators': 208, 'xgb_subsample': 0.8240011106436579, 'xgb_colsample_bytree': 0.7373377137495203, 'xgb_gamma': 0.34173570672385684, 'xgb_reg_alpha': 8.545231833375233e-07, 'xgb_reg_lambda': 0.028153389114251973, 'lgbm_learning_rate': 0.03308272206083648, 'lgbm_num_leaves': 136, 'lgbm_n_estimators': 391, 'lgbm_max_depth': 7, 'lgbm_subsample': 0.7371520899974232, 'lgbm_colsample_bytree': 0.9180990744828023, 'lgbm_reg_alpha': 4.289034652880439e-07, 'lgbm_reg_lambda': 8.487847944978412e-08, 'rf_n_estimators': 296, 'rf_max_depth': 16, 'rf_min_samples_split': 15, 'rf_min_samples_leaf': 2, 'rf_max_features': 0.7, 'catboost_iterations': 582, 'catboost_learning_rate': 0.04433200200638091, 'catboost_depth': 4, 'catboost_l2_leaf_reg': 9.415920873675043, 'catboost_border_count': 250}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 00:14:46,135 - INFO - Training rf on fold 1
+2025-05-14 00:15:06,858 - INFO - Start training of model rf, at time 2025-05-14 00:15:06.858880
+2025-05-14 00:17:51,411 - INFO - End training of model rf, at time 2025-05-14 00:17:51.411420
+2025-05-14 00:17:55,090 - INFO - Training rf on fold 2
+2025-05-14 00:17:56,327 - INFO - Start training of model rf, at time 2025-05-14 00:17:56.327234
+2025-05-14 00:20:40,930 - INFO - End training of model rf, at time 2025-05-14 00:20:40.930021
+2025-05-14 00:20:45,261 - INFO - Training rf on fold 3
+2025-05-14 00:20:46,095 - INFO - Start training of model rf, at time 2025-05-14 00:20:46.095490
+2025-05-14 00:23:32,337 - INFO - End training of model rf, at time 2025-05-14 00:23:32.337131
+2025-05-14 00:23:35,976 - INFO - Model: rf, Cross-Validated RMSE: 0.16175767312857617
+[I 2025-05-14 00:23:35,987] Trial 5 finished with value: 0.16175767312857617 and parameters: {'xgb_learning_rate': 0.06255339915864609, 'xgb_max_depth': 4, 'xgb_n_estimators': 476, 'xgb_subsample': 0.8852770526550948, 'xgb_colsample_bytree': 0.7040441435437664, 'xgb_gamma': 0.49276671422648327, 'xgb_reg_alpha': 1.801724653256575e-08, 'xgb_reg_lambda': 2.1507495863545654e-08, 'lgbm_learning_rate': 0.011023194984961342, 'lgbm_num_leaves': 86, 'lgbm_n_estimators': 733, 'lgbm_max_depth': 10, 'lgbm_subsample': 0.9406413715251232, 'lgbm_colsample_bytree': 0.7752098296451946, 'lgbm_reg_alpha': 0.0011542774045122204, 'lgbm_reg_lambda': 3.1688701715782793e-06, 'rf_n_estimators': 248, 'rf_max_depth': 14, 'rf_min_samples_split': 9, 'rf_min_samples_leaf': 19, 'rf_max_features': 'sqrt', 'catboost_iterations': 564, 'catboost_learning_rate': 0.04260506087728192, 'catboost_depth': 7, 'catboost_l2_leaf_reg': 7.917372282732519, 'catboost_border_count': 226}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 00:23:36,424 - INFO - Training rf on fold 1
+2025-05-14 00:23:40,742 - INFO - Start training of model rf, at time 2025-05-14 00:23:40.742654
+2025-05-14 00:30:15,409 - INFO - End training of model rf, at time 2025-05-14 00:30:15.409219
+2025-05-14 00:30:16,547 - INFO - Training rf on fold 2
+2025-05-14 00:30:17,464 - INFO - Start training of model rf, at time 2025-05-14 00:30:17.464566
+2025-05-14 00:36:46,632 - INFO - End training of model rf, at time 2025-05-14 00:36:46.632040
+2025-05-14 00:36:48,453 - INFO - Training rf on fold 3
+2025-05-14 00:36:53,220 - INFO - Start training of model rf, at time 2025-05-14 00:36:53.220763
+2025-05-14 00:43:25,969 - INFO - End training of model rf, at time 2025-05-14 00:43:25.969860
+2025-05-14 00:43:27,186 - INFO - Model: rf, Cross-Validated RMSE: 0.16232032357396178
+[I 2025-05-14 00:43:27,209] Trial 6 finished with value: 0.16232032357396178 and parameters: {'xgb_learning_rate': 0.12149283585821781, 'xgb_max_depth': 3, 'xgb_n_estimators': 370, 'xgb_subsample': 0.8901658447746301, 'xgb_colsample_bytree': 0.9359213818594805, 'xgb_gamma': 0.3017905165429001, 'xgb_reg_alpha': 1.0205555495802517e-05, 'xgb_reg_lambda': 5.6075445808925236e-08, 'lgbm_learning_rate': 0.03663142598801606, 'lgbm_num_leaves': 54, 'lgbm_n_estimators': 647, 'lgbm_max_depth': 4, 'lgbm_subsample': 0.6796239781956603, 'lgbm_colsample_bytree': 0.918286262511077, 'lgbm_reg_alpha': 0.0026843361823340583, 'lgbm_reg_lambda': 0.14321302404716468, 'rf_n_estimators': 274, 'rf_max_depth': 5, 'rf_min_samples_split': 2, 'rf_min_samples_leaf': 5, 'rf_max_features': None, 'catboost_iterations': 414, 'catboost_learning_rate': 0.09922248641403254, 'catboost_depth': 5, 'catboost_l2_leaf_reg': 3.2797269405549225, 'catboost_border_count': 39}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 00:43:27,504 - INFO - Training rf on fold 1
+2025-05-14 00:43:28,298 - INFO - Start training of model rf, at time 2025-05-14 00:43:28.298159
+2025-05-14 01:00:33,576 - INFO - End training of model rf, at time 2025-05-14 01:00:33.576347
+2025-05-14 01:00:36,788 - INFO - Training rf on fold 2
+2025-05-14 01:00:37,919 - INFO - Start training of model rf, at time 2025-05-14 01:00:37.919014
+2025-05-14 01:17:49,841 - INFO - End training of model rf, at time 2025-05-14 01:17:49.841305
+2025-05-14 01:17:55,455 - INFO - Training rf on fold 3
+2025-05-14 01:18:03,217 - INFO - Start training of model rf, at time 2025-05-14 01:18:03.217560
+2025-05-14 01:35:11,452 - INFO - End training of model rf, at time 2025-05-14 01:35:11.451861
+2025-05-14 01:35:15,250 - INFO - Model: rf, Cross-Validated RMSE: 0.16155745163663623
+[I 2025-05-14 01:35:15,268] Trial 7 finished with value: 0.16155745163663623 and parameters: {'xgb_learning_rate': 0.04038351159558434, 'xgb_max_depth': 10, 'xgb_n_estimators': 307, 'xgb_subsample': 0.9912740542331574, 'xgb_colsample_bytree': 0.9430417037010519, 'xgb_gamma': 0.4454975480229659, 'xgb_reg_alpha': 2.662948157447565e-06, 'xgb_reg_lambda': 1.29206699350288e-06, 'lgbm_learning_rate': 0.015759507604944153, 'lgbm_num_leaves': 106, 'lgbm_n_estimators': 224, 'lgbm_max_depth': 5, 'lgbm_subsample': 0.6145180155942928, 'lgbm_colsample_bytree': 0.9007006517146038, 'lgbm_reg_alpha': 0.001778359922797921, 'lgbm_reg_lambda': 2.0341969825025365e-08, 'rf_n_estimators': 393, 'rf_max_depth': 10, 'rf_min_samples_split': 12, 'rf_min_samples_leaf': 17, 'rf_max_features': None, 'catboost_iterations': 718, 'catboost_learning_rate': 0.012641444624863768, 'catboost_depth': 6, 'catboost_l2_leaf_reg': 1.6897915244970172, 'catboost_border_count': 84}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 01:35:15,905 - INFO - Training rf on fold 1
+2025-05-14 01:35:18,888 - INFO - Start training of model rf, at time 2025-05-14 01:35:18.888252
+2025-05-14 01:38:10,546 - INFO - End training of model rf, at time 2025-05-14 01:38:10.546063
+2025-05-14 01:38:12,095 - INFO - Training rf on fold 2
+2025-05-14 01:38:13,151 - INFO - Start training of model rf, at time 2025-05-14 01:38:13.151484
+2025-05-14 01:41:05,510 - INFO - End training of model rf, at time 2025-05-14 01:41:05.510226
+2025-05-14 01:41:07,156 - INFO - Training rf on fold 3
+2025-05-14 01:41:10,205 - INFO - Start training of model rf, at time 2025-05-14 01:41:10.205228
+2025-05-14 01:44:02,008 - INFO - End training of model rf, at time 2025-05-14 01:44:02.008344
+2025-05-14 01:44:03,048 - INFO - Model: rf, Cross-Validated RMSE: 0.16229889063236289
+[I 2025-05-14 01:44:03,072] Trial 8 finished with value: 0.16229889063236289 and parameters: {'xgb_learning_rate': 0.16411809099649532, 'xgb_max_depth': 4, 'xgb_n_estimators': 546, 'xgb_subsample': 0.8118667128493264, 'xgb_colsample_bytree': 0.7086728410967384, 'xgb_gamma': 0.29709516043760975, 'xgb_reg_alpha': 3.3135622166464954e-06, 'xgb_reg_lambda': 0.008760830901818664, 'lgbm_learning_rate': 0.194969673268093, 'lgbm_num_leaves': 91, 'lgbm_n_estimators': 728, 'lgbm_max_depth': 6, 'lgbm_subsample': 0.8160321917948669, 'lgbm_colsample_bytree': 0.6527544116929459, 'lgbm_reg_alpha': 0.0027740491065429518, 'lgbm_reg_lambda': 0.004235579365437045, 'rf_n_estimators': 171, 'rf_max_depth': 5, 'rf_min_samples_split': 9, 'rf_min_samples_leaf': 11, 'rf_max_features': 0.7, 'catboost_iterations': 494, 'catboost_learning_rate': 0.07024469413859742, 'catboost_depth': 6, 'catboost_l2_leaf_reg': 4.657001672876109, 'catboost_border_count': 186}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 01:44:03,446 - INFO - Training rf on fold 1
+2025-05-14 01:44:04,739 - INFO - Start training of model rf, at time 2025-05-14 01:44:04.739387
+2025-05-14 01:50:04,739 - INFO - End training of model rf, at time 2025-05-14 01:50:04.738313
+2025-05-14 01:50:18,482 - INFO - Training rf on fold 2
+2025-05-14 01:50:37,358 - INFO - Start training of model rf, at time 2025-05-14 01:50:37.357012
+2025-05-14 01:56:34,019 - INFO - End training of model rf, at time 2025-05-14 01:56:34.017693
+2025-05-14 01:56:48,469 - INFO - Training rf on fold 3
+2025-05-14 01:57:04,003 - INFO - Start training of model rf, at time 2025-05-14 01:57:04.002024
+2025-05-14 02:03:00,429 - INFO - End training of model rf, at time 2025-05-14 02:03:00.428505
+2025-05-14 02:03:14,966 - INFO - Model: rf, Cross-Validated RMSE: 0.16146417656353937
+[I 2025-05-14 02:03:15,141] Trial 9 finished with value: 0.16146417656353937 and parameters: {'xgb_learning_rate': 0.11259904113186875, 'xgb_max_depth': 8, 'xgb_n_estimators': 555, 'xgb_subsample': 0.691242673889638, 'xgb_colsample_bytree': 0.7097490349536976, 'xgb_gamma': 0.4863571201931397, 'xgb_reg_alpha': 6.8371887532896435e-06, 'xgb_reg_lambda': 0.003138648278244386, 'lgbm_learning_rate': 0.012421656059221313, 'lgbm_num_leaves': 68, 'lgbm_n_estimators': 182, 'lgbm_max_depth': 8, 'lgbm_subsample': 0.6859858565680031, 'lgbm_colsample_bytree': 0.7232341593879996, 'lgbm_reg_alpha': 0.051892661735372214, 'lgbm_reg_lambda': 2.3483397651732772e-08, 'rf_n_estimators': 395, 'rf_max_depth': 23, 'rf_min_samples_split': 15, 'rf_min_samples_leaf': 1, 'rf_max_features': 'sqrt', 'catboost_iterations': 401, 'catboost_learning_rate': 0.01741587552289756, 'catboost_depth': 10, 'catboost_l2_leaf_reg': 6.158196897415085, 'catboost_border_count': 220}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 02:03:16,876 - INFO - Training rf on fold 1
+2025-05-14 02:03:30,845 - INFO - Start training of model rf, at time 2025-05-14 02:03:30.845087
+2025-05-14 02:20:02,808 - INFO - End training of model rf, at time 2025-05-14 02:20:02.808790
+2025-05-14 02:20:08,908 - INFO - Training rf on fold 2
+2025-05-14 02:20:13,330 - INFO - Start training of model rf, at time 2025-05-14 02:20:13.327788
+2025-05-14 02:36:44,117 - INFO - End training of model rf, at time 2025-05-14 02:36:44.117005
+2025-05-14 02:36:50,792 - INFO - Training rf on fold 3
+2025-05-14 02:36:57,398 - INFO - Start training of model rf, at time 2025-05-14 02:36:57.396888
+2025-05-14 02:53:33,043 - INFO - End training of model rf, at time 2025-05-14 02:53:33.043177
+2025-05-14 02:53:38,564 - INFO - Model: rf, Cross-Validated RMSE: 0.16145318000591502
+[I 2025-05-14 02:53:38,658] Trial 10 finished with value: 0.16145318000591502 and parameters: {'xgb_learning_rate': 0.011046115203959915, 'xgb_max_depth': 6, 'xgb_n_estimators': 701, 'xgb_subsample': 0.6015043461628807, 'xgb_colsample_bytree': 0.6241358187063352, 'xgb_gamma': 0.04012477849332258, 'xgb_reg_alpha': 0.002045956293644282, 'xgb_reg_lambda': 1.9503607911091433e-06, 'lgbm_learning_rate': 0.09112560633912613, 'lgbm_num_leaves': 191, 'lgbm_n_estimators': 114, 'lgbm_max_depth': 9, 'lgbm_subsample': 0.8788852064559398, 'lgbm_colsample_bytree': 0.9996591069553377, 'lgbm_reg_alpha': 4.6387416536339495e-06, 'lgbm_reg_lambda': 0.0003940465549819407, 'rf_n_estimators': 497, 'rf_max_depth': 11, 'rf_min_samples_split': 20, 'rf_min_samples_leaf': 15, 'rf_max_features': 0.7, 'catboost_iterations': 201, 'catboost_learning_rate': 0.1761216356149371, 'catboost_depth': 8, 'catboost_l2_leaf_reg': 1.0743634154673638, 'catboost_border_count': 101}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 02:53:39,730 - INFO - Training rf on fold 1
+2025-05-14 02:53:43,254 - INFO - Start training of model rf, at time 2025-05-14 02:53:43.254003
+2025-05-14 03:10:14,426 - INFO - End training of model rf, at time 2025-05-14 03:10:14.424995
+2025-05-14 03:10:22,354 - INFO - Training rf on fold 2
+2025-05-14 03:10:32,374 - INFO - Start training of model rf, at time 2025-05-14 03:10:32.373109
+2025-05-14 03:27:11,095 - INFO - End training of model rf, at time 2025-05-14 03:27:11.093985
+2025-05-14 03:27:21,637 - INFO - Training rf on fold 3
+2025-05-14 03:27:35,951 - INFO - Start training of model rf, at time 2025-05-14 03:27:35.950601
+2025-05-14 03:43:50,928 - INFO - End training of model rf, at time 2025-05-14 03:43:50.927223
+2025-05-14 03:43:58,954 - INFO - Model: rf, Cross-Validated RMSE: 0.1612603305795914
+[I 2025-05-14 03:43:59,018] Trial 11 finished with value: 0.1612603305795914 and parameters: {'xgb_learning_rate': 0.024987228390496174, 'xgb_max_depth': 10, 'xgb_n_estimators': 265, 'xgb_subsample': 0.7145861541801313, 'xgb_colsample_bytree': 0.8139991102724206, 'xgb_gamma': 0.20028201417965252, 'xgb_reg_alpha': 3.5621548121066116e-08, 'xgb_reg_lambda': 0.5648614623242533, 'lgbm_learning_rate': 0.05862445391056891, 'lgbm_num_leaves': 145, 'lgbm_n_estimators': 427, 'lgbm_max_depth': 7, 'lgbm_subsample': 0.7534217889296665, 'lgbm_colsample_bytree': 0.8614454286491282, 'lgbm_reg_alpha': 2.3569064845633837e-06, 'lgbm_reg_lambda': 1.9588569319135115e-05, 'rf_n_estimators': 362, 'rf_max_depth': 17, 'rf_min_samples_split': 18, 'rf_min_samples_leaf': 12, 'rf_max_features': 0.7, 'catboost_iterations': 623, 'catboost_learning_rate': 0.19753754633098403, 'catboost_depth': 4, 'catboost_l2_leaf_reg': 9.872917889086661, 'catboost_border_count': 120}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 03:43:59,776 - INFO - Training rf on fold 1
+2025-05-14 03:44:10,853 - INFO - Start training of model rf, at time 2025-05-14 03:44:10.851648
+2025-05-14 04:03:48,065 - INFO - End training of model rf, at time 2025-05-14 04:03:48.064607
+2025-05-14 04:03:58,585 - INFO - Training rf on fold 2
+2025-05-14 04:04:10,795 - INFO - Start training of model rf, at time 2025-05-14 04:04:10.793283
+2025-05-14 04:23:32,536 - INFO - End training of model rf, at time 2025-05-14 04:23:32.534910
+2025-05-14 04:23:43,334 - INFO - Training rf on fold 3
+2025-05-14 04:23:55,963 - INFO - Start training of model rf, at time 2025-05-14 04:23:55.961056
+2025-05-14 04:43:29,144 - INFO - End training of model rf, at time 2025-05-14 04:43:29.142159
+2025-05-14 04:43:38,475 - INFO - Model: rf, Cross-Validated RMSE: 0.16125644418633947
+[I 2025-05-14 04:43:38,594] Trial 12 finished with value: 0.16125644418633947 and parameters: {'xgb_learning_rate': 0.02473051746254348, 'xgb_max_depth': 7, 'xgb_n_estimators': 325, 'xgb_subsample': 0.7049666614696724, 'xgb_colsample_bytree': 0.8445965454015025, 'xgb_gamma': 0.17139997477894697, 'xgb_reg_alpha': 0.00035548576328417225, 'xgb_reg_lambda': 0.00011466429871870363, 'lgbm_learning_rate': 0.07499106561594987, 'lgbm_num_leaves': 200, 'lgbm_n_estimators': 509, 'lgbm_max_depth': 8, 'lgbm_subsample': 0.7642947463085894, 'lgbm_colsample_bytree': 0.8402176905215427, 'lgbm_reg_alpha': 5.878251722381837e-06, 'lgbm_reg_lambda': 8.383090299034966e-05, 'rf_n_estimators': 406, 'rf_max_depth': 19, 'rf_min_samples_split': 20, 'rf_min_samples_leaf': 13, 'rf_max_features': 0.7, 'catboost_iterations': 747, 'catboost_learning_rate': 0.19631735449032459, 'catboost_depth': 4, 'catboost_l2_leaf_reg': 5.828359468311941, 'catboost_border_count': 100}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 04:43:39,377 - INFO - Training rf on fold 1
+2025-05-14 04:43:54,030 - INFO - Start training of model rf, at time 2025-05-14 04:43:54.029171
+2025-05-14 05:10:39,240 - INFO - End training of model rf, at time 2025-05-14 05:10:39.236206
+2025-05-14 05:10:58,608 - INFO - Training rf on fold 2
+2025-05-14 05:11:11,082 - INFO - Start training of model rf, at time 2025-05-14 05:11:11.080476
+2025-05-14 05:37:56,972 - INFO - End training of model rf, at time 2025-05-14 05:37:56.968618
+2025-05-14 05:38:17,420 - INFO - Training rf on fold 3
+2025-05-14 05:38:31,629 - INFO - Start training of model rf, at time 2025-05-14 05:38:31.628525
+2025-05-14 06:05:15,901 - INFO - End training of model rf, at time 2025-05-14 06:05:15.897956
+2025-05-14 06:05:36,319 - INFO - Model: rf, Cross-Validated RMSE: 0.16130375108786768
+[I 2025-05-14 06:05:36,555] Trial 13 finished with value: 0.16130375108786768 and parameters: {'xgb_learning_rate': 0.01428072596052895, 'xgb_max_depth': 6, 'xgb_n_estimators': 406, 'xgb_subsample': 0.6500572673225241, 'xgb_colsample_bytree': 0.8233155913642022, 'xgb_gamma': 0.13418201233352373, 'xgb_reg_alpha': 0.00107356598367886, 'xgb_reg_lambda': 7.717885752541567e-05, 'lgbm_learning_rate': 0.09692656606766223, 'lgbm_num_leaves': 199, 'lgbm_n_estimators': 541, 'lgbm_max_depth': 9, 'lgbm_subsample': 0.7921714007363498, 'lgbm_colsample_bytree': 0.6788006109243431, 'lgbm_reg_alpha': 1.0072634422983742e-08, 'lgbm_reg_lambda': 0.003315998727643994, 'rf_n_estimators': 493, 'rf_max_depth': 25, 'rf_min_samples_split': 20, 'rf_min_samples_leaf': 14, 'rf_max_features': 0.7, 'catboost_iterations': 741, 'catboost_learning_rate': 0.1256643323400966, 'catboost_depth': 8, 'catboost_l2_leaf_reg': 5.282405205820431, 'catboost_border_count': 48}. Best is trial 3 with value: 0.16122992083465745.
+2025-05-14 06:05:37,718 - INFO - Training rf on fold 1
+2025-05-14 06:05:48,845 - INFO - Start training of model rf, at time 2025-05-14 06:05:48.845084
+Exception ignored in: <function Image.__del__ at 0x7f3b30229b20>
+Traceback (most recent call last):
+  File "/home/david/fork/DataMining/.conda/lib/python3.12/tkinter/__init__.py", line 4119, in __del__
+    self.tk.call('image', 'delete', self.name)
+RuntimeError: main thread is not in main loop
+Exception ignored in: <function Variable.__del__ at 0x7f3b301ab2e0>
+Traceback (most recent call last):
+  File "/home/david/fork/DataMining/.conda/lib/python3.12/tkinter/__init__.py", line 414, in __del__
+    if self._tk.getboolean(self._tk.call("info", "exists", self._name)):
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: main thread is not in main loop
+Exception ignored in: <function Variable.__del__ at 0x7f3b301ab2e0>
+Traceback (most recent call last):
+  File "/home/david/fork/DataMining/.conda/lib/python3.12/tkinter/__init__.py", line 414, in __del__
+    if self._tk.getboolean(self._tk.call("info", "exists", self._name)):
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: main thread is not in main loop
+Exception ignored in: <function Variable.__del__ at 0x7f3b301ab2e0>
+Traceback (most recent call last):
+  File "/home/david/fork/DataMining/.conda/lib/python3.12/tkinter/__init__.py", line 414, in __del__
+    if self._tk.getboolean(self._tk.call("info", "exists", self._name)):
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: main thread is not in main loop 

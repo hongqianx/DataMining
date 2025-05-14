@@ -95,6 +95,8 @@ def hyperOptimization(trial, model_name):
             'min_samples_split': trial.suggest_int('rf_min_samples_split', 2, 20),
             'min_samples_leaf': trial.suggest_int('rf_min_samples_leaf', 1, 20),
             'max_features': trial.suggest_categorical('rf_max_features', ['sqrt', 'log2', 0.7, None]),
+            'warm-start': False,
+            'bootstrap': True
         },
         'catboost': {
             'iterations': trial.suggest_int('catboost_iterations', 100, 800),
@@ -139,7 +141,7 @@ def create_model(model_name, params):
         elif model_name == 'rf': return RandomForestRegressor(**params, n_jobs=-1)
         elif model_name == 'catboost': return CatBoostRegressor(**params, verbose=0)
 
-models = ['lgbm', 'rf', 'xgb', 'catboost']
+models = ['rf', 'lgbm', 'xgb', 'catboost']
 
 # TODO Maybe use Neural network ensemble
 

@@ -2,7 +2,14 @@ import logging
 import sys
 import subprocess
 import numpy as np
+import matplotlib
+import os
+# Disable maplotlib GUI, since this creates 'main thread not in main loop' error.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+# Prepare folder for plots
+os.makedirs("../Plots/", exist_ok=True)
 
 logger = logging.getLogger("MLLogger")
 logger.setLevel(logging.DEBUG)

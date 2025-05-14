@@ -24,3 +24,11 @@ Ensemble model RMSE: 0.20417354006513655
 2025-05-13 20:53:02,203 - INFO - Model: xgb, RMSE: 0.16481
 2025-05-13 20:53:02,203 - INFO - Model: rf, RMSE: 0.16527
 2025-05-13 20:53:02,203 - INFO - Model: lgbm, RMSE: 0.16587
+
+
+
+Tweak sites:
+- https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+- https://lightgbm.readthedocs.io/en/latest/Parameters.html
+- https://xgboost.readthedocs.io/en/stable/parameter.html
+- https://catboost.ai/docs/en/concepts/parameter-tuning
