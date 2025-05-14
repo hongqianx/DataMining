@@ -11,8 +11,8 @@ from common.imputation import get_imputation_values, apply_imputation
 HAS_GPU = False # has_nvidia_gpu()
 TESTSPLIT_RATIO = 10 
 TRAIN_WITHOUT_EVALUATION = False 
-TRAIN_DATA_PERCENTAGE = 0.02 
-TEST_DATA_PERCENTAGE = 0.02 
+TRAIN_DATA_PERCENTAGE = 1 
+TEST_DATA_PERCENTAGE = 1 
 
 training_data_path = r"../input/training_set_VU_DM.csv"
 test_data_path = r"../input/test_set_VU_DM.csv"
@@ -28,15 +28,27 @@ impute_values = get_imputation_values(df)
 df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
 
+# conditions = [
+#     df['booking_bool'] == 1,
+#     df['click_bool'] == 1
+# ]
+
+# choices = [5, 1]
+
+# # df['book_feature'] = np.select(conditions, choices, default=0)
+# df.drop(columns=['booking_bool', 'click_bool'], inplace=True, errors='ignore')
+
 # NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
 df_test = apply_imputation(df_test, impute_values)
-df_test = feature_engineering(df_test, TRAIN_WITHOUT_EVALUATION)
+df_test = feature_engineering(df_test)
 
 logger.info("Preprocessing pipeline finished.")
 
-target_value = "book_feature"
-exclude_values = [target_value] + ["position", "gross_bookings_usd"]
+target_value = "booking_bool"
+exclude_values = [target_value] + ["position", "gross_bookings_usd", "click_bool"]
 target_col = df[target_value]
+df.sort_values(by='srch_id', inplace=True)
+df.set_index("srch_id", inplace=True)
 
 X = df.drop(columns=exclude_values)
 y = target_col
@@ -50,6 +62,10 @@ if TRAIN_WITHOUT_EVALUATION:
 else:
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
     x_test_kaggle = df_test # This is the externally provided test set for submission
+
+get_group_size = lambda df: df.reset_index().groupby("srch_id")['srch_id'].count()
+train_groups = get_group_size(x_train)
+test_groups = get_group_size(x_test)
 
 lgbm_ranker_params = {
     'objective': 'lambdarank',
@@ -71,20 +87,23 @@ lgbm_ranker_model = LGBMRanker(**lgbm_ranker_params)
 
 logger.info(f"Preparing data for LGBMRanker training. x_train shape: {x_train.shape}")
 
-train_groups = x_train.groupby('srch_id').size().to_list()
-x_train_for_fit = x_train.drop(columns=['srch_id'])
+# train_groups = x_train.groupby('srch_id').size().to_list()
+# x_train_for_fit = x_train.drop(columns=['srch_id'])
 
 logger.info(f"Start training LGBMRanker at {dt.datetime.now()}")
 # Eval set = list of all srch id.
 # Eval group = list of occurences of srch id in our results.
 lgbm_ranker_model.fit(
-    x_train_for_fit,
+    x_train,
     y_train,
-    group=train_groups
+    group=train_groups,
+    eval_set=[(x_test, y_test)],
+    eval_group=[test_groups],
+    eval_metric=['map']
 )
 logger.info(f"LGBMRanker training finished at {dt.datetime.now()}")
 
-feature_column_names = x_train_for_fit.columns.tolist()
+feature_column_names = x_train.columns.tolist()
 display_feature_importances(lgbm_ranker_model, feature_column_names, "LGBMRanker")
 
 if not TRAIN_WITHOUT_EVALUATION and y_test is not None:
@@ -118,6 +137,8 @@ if not TRAIN_WITHOUT_EVALUATION and y_test is not None:
 
 
 logger.info("Preparing Kaggle test set for final prediction")
+print(X.columns)
+print(x_test_kaggle.columns)
 df_test_submission_features = x_test_kaggle[X.columns.intersection(x_test_kaggle.columns)]
 
 if 'srch_id' not in df_test_submission_features.columns:
