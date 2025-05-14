@@ -95,7 +95,7 @@ def hyperOptimization(trial, model_name):
             'min_samples_split': trial.suggest_int('rf_min_samples_split', 2, 20),
             'min_samples_leaf': trial.suggest_int('rf_min_samples_leaf', 1, 20),
             'max_features': trial.suggest_categorical('rf_max_features', ['sqrt', 'log2', 0.7, None]),
-            'warm-start': False,
+            'warm_start': False,
             'bootstrap': True
         },
         'catboost': {
