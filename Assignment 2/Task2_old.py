@@ -30,6 +30,8 @@ test_data_path = r"../input/test_set_VU_DM.csv"
 df = pd.read_csv(training_data_path).sample(frac=TRAIN_DATA_PERCENTAGE, random_state=42)
 df_test = pd.read_csv(test_data_path).sample(frac=TEST_DATA_PERCENTAGE, random_state=42)
 
+print(df.head())
+
 # --- Preprocessing Pipeline Execution ---
 logger.info("Starting preprocessing pipeline")
 
@@ -42,13 +44,13 @@ df = feature_engineering(df)
 
 # NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
 df_test = apply_imputation(df_test, impute_values)
-df_test = feature_engineering(df_test)
+df_test = feature_engineering(df_test, TRAIN_WITHOUT_EVALUATION)
 
 logger.info("Preprocessing pipeline finished.")
 
 # --- Target and Feature Selection ---
-target_value = "booking_bool"
-exclude_values = [target_value] + ["click_bool", "position", "gross_bookings_usd"]
+target_value = "book_feature"
+exclude_values = [target_value] + ["position", "gross_bookings_usd"]
 target_col = df[target_value]
 
 # Retrieve the data into training and testing sets (splitting is already done)
@@ -127,9 +129,20 @@ def hyperOptimization(trial, model_name):
         X_train_cv, X_val_cv = x_train.iloc[train_index], x_train.iloc[val_index]
         y_train_cv, y_val_cv = y_train.iloc[train_index], y_train.iloc[val_index]
 
-        logger.info(f"Start training of model {model_name}, at time {dt.datetime.now()}")
-        model.fit(X_train_cv, y_train_cv)
-        logger.info(f"End training of model {model_name}, at time {dt.datetime.now()}")
+        if (model_name == 'lgbm_rank'):
+            logger.info(f"Start training lgbm rank with group")
+            groups = X_train_cv.groupby('srch_id').size().to_list()
+            model.fit(
+                X_train_cv,
+                y_train_cv, 
+                group=groups,
+                eval_set=[(X_val_cv, y_val_cv)],
+                eval_group=X_val_cv['srch_id']
+            )
+        else:
+            logger.info(f"Start training of model {model_name}, at time {dt.datetime.now()}")
+            model.fit(X_train_cv, y_train_cv)
+            logger.info(f"End training of model {model_name}, at time {dt.datetime.now()}")
 
         y_pred = model.predict(X_val_cv)
         rmse = np.sqrt(np.mean((y_pred - y_val_cv)**2))
@@ -161,7 +174,11 @@ models = ['rf', 'lgbm_rank']
 model_performance_rmse = {}
 best_models = []
 for model_name in models:
+    if model_name == 'lgbm_rank':
+        continue
+
     study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner())
+
     study.optimize(lambda trial: hyperOptimization(trial, model_name), n_trials=OPTUNA_TRIALS)
 
     logger.info(f"Best hyperparameters for {model_name}: {study.best_params}")
@@ -180,18 +197,54 @@ for model_name in models:
     # if (model_name == 'xgb' and HAS_GPU):
     #     x_train = cp.array(cp.asarray(x_train.astype(np.float32).to_numpy()))
 
+
+
     logger.info(f"Training {model_name} with best hyperparameters")
-    best_model.fit(x_train, y_train)
+    if (model_name == 'lgbm_rank'):
+        best_model.fit(x_train, y_train, group=x_train['srch_id'])
+    else:
+        best_model.fit(x_train, y_train)
     best_models.append((model_name, best_model))
     logger.info(f"Model (best) {model_name} trained successfully")
 
     feature_column_names = x_train.columns.tolist()
     display_feature_importances(best_model, feature_column_names, model_name)
 
-stacking_model = StackingRegressor(
-    estimators=[(name, model) for name, model in best_models],
-    final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
-)
+from lightgbm import LGBMRanker
+
+def configure_lgbm_ranker():
+    model_name = 'lgbm_rank'
+
+    best_params = {
+        'objective': 'lambdarank',
+        'learning_rate': 0.05,
+        'num_leaves': 100,
+        'n_estimators': 300,
+        'max_depth': 6,
+        'subsample': 0.8,
+        'colsample_bytree': 0.8,
+        'reg_alpha': 0.1,
+        'reg_lambda': 0.1
+    }
+
+    lgbm_ranker = LGBMRanker(**best_params)
+
+    group = x_train.groupby('srch_id').size().to_list()
+    lgbm_ranker.fit(
+        x_train.drop(columns=['srch_id']),
+        y_train,
+        group=group
+    )
+
+    best_models.append((model_name, lgbm_ranker))
+
+configure_lgbm_ranker()
+
+stacking_model = dict(best_models)['lgbm_rank']
+# stacking_model = StackingRegressor(
+#     estimators=[(name, model) for name, model in best_models],
+#     final_estimator=RandomForestRegressor(n_estimators=ENSEMBLE_N_ESTIMATORS, n_jobs=-1)
+# )
 
 model_list = list(model_performance_rmse.items())
 
@@ -205,7 +258,8 @@ for model_name, rmse in model_list:
 
 logger.info(f"Training ensemble model with {len(best_models)} base models")
 logger.info(f"Using the following data types for x: {x_train.dtypes} and for y: {y_train.dtypes}")
-stacking_model.fit(x_train, y_train)
+
+stacking_model.fit(x_train, y_train, group=df['srch_id'])
 logger.info("Ensemble model trained successfully")
 
 stacking_predictions = stacking_model.predict(x_test)
