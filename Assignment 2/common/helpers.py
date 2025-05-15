@@ -71,3 +71,20 @@ def display_feature_importances(model, feature_names, model_name="Model", top_n=
     except Exception as e:
         logger.error(f"Could not save plot for {model_name}: {e}")
     plt.close()
+
+def print_pos_and_pred(x_test_predictions, x_test_positions, amount=20):
+    toprint = x_test_positions.sort_values(by=["srch_id"])[:amount]
+    toprint["predictions"] = x_test_predictions[:amount]
+    print(toprint.sort_values(by=["srch_id", "position"]))
+
+def create_book_feature(df):
+    conditions = [
+        df['booking_bool'] == 1,
+        df['click_bool'] == 1
+    ]
+
+    choices = [5, 1]
+
+    df['book_feature'] = np.select(conditions, choices, default=0)
+    df.drop(columns=['booking_bool', 'click_bool'], inplace=True, errors='ignore')
+    return df

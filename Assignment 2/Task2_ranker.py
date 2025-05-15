@@ -4,7 +4,7 @@ import datetime as dt
 from lightgbm import LGBMRanker
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
-from common.helpers import logger, has_nvidia_gpu, display_feature_importances
+from common.helpers import logger, has_nvidia_gpu, display_feature_importances, print_pos_and_pred, create_book_feature
 from common.feature_engineering import feature_engineering
 from common.imputation import get_imputation_values, apply_imputation
 
@@ -27,16 +27,7 @@ impute_values = get_imputation_values(df)
 
 df = apply_imputation(df, impute_values)
 df = feature_engineering(df)
-
-# conditions = [
-#     df['booking_bool'] == 1,
-#     df['click_bool'] == 1
-# ]
-
-# choices = [5, 1]
-
-# # df['book_feature'] = np.select(conditions, choices, default=0)
-# df.drop(columns=['booking_bool', 'click_bool'], inplace=True, errors='ignore')
+df = create_book_feature(df)
 
 # NOTE ASSIGNMENT PROVIDED TEST SET CONTAINS NO CLICK_BOOL THUS USELESS FOR TESTING 
 df_test = apply_imputation(df_test, impute_values)
@@ -44,11 +35,14 @@ df_test = feature_engineering(df_test)
 
 logger.info("Preprocessing pipeline finished.")
 
-target_value = "booking_bool"
-exclude_values = [target_value] + ["position", "gross_bookings_usd", "click_bool"]
+target_value = "book_feature"
+exclude_values = [target_value] + ["gross_bookings_usd", "position"] # worst features for lgbm --> #, "site_id", "visitor_location_country_id", "visitor_hist_starrating", "srch_length_of_stay", "srch_booking_window", "srch_adults_count", "srch_children_count", "srch_room_count", "srch_saturday_night_bool", "random_bool", "total_people", "visitor_hist_adr_usd_log", "avg_comp_rate_percent_diff"]
 target_col = df[target_value]
+# when displaying positions, comment the 2 lines below and have line 44 not commented. also follow instructions on 112, 124, 57-64
 df.sort_values(by='srch_id', inplace=True)
 df.set_index("srch_id", inplace=True)
+# exclude_values = [target_value] + ["gross_bookings_usd"]
+
 
 X = df.drop(columns=exclude_values)
 y = target_col
@@ -61,11 +55,21 @@ if TRAIN_WITHOUT_EVALUATION:
     y_test = None
 else:
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=TESTSPLIT_RATIO/100, random_state=42)
+    # when displaying position, comment these in (also follow instructions on 112, 124, 42-44)
+    # for_comparison = x_test[["position", "srch_id", "prop_id"]].copy()
+    # x_train.drop(columns=["position"], inplace=True)
+    # x_test.drop(columns=["position"], inplace=True)
+    # x_train.sort_values(by='srch_id', inplace=True)
+    # x_train.set_index("srch_id", inplace=True)
+    # x_test.sort_values(by='srch_id', inplace=True)
+    # x_test.set_index("srch_id", inplace=True)
     x_test_kaggle = df_test # This is the externally provided test set for submission
 
 get_group_size = lambda df: df.reset_index().groupby("srch_id")['srch_id'].count()
 train_groups = get_group_size(x_train)
+#print(train_groups)
 test_groups = get_group_size(x_test)
+#print(test_groups)
 
 lgbm_ranker_params = {
     'objective': 'lambdarank',
@@ -99,12 +103,14 @@ lgbm_ranker_model.fit(
     group=train_groups,
     eval_set=[(x_test, y_test)],
     eval_group=[test_groups],
-    eval_metric=['map']
+    eval_metric=['map'] #eval_metric=['ndcg']
 )
 logger.info(f"LGBMRanker training finished at {dt.datetime.now()}")
 
 feature_column_names = x_train.columns.tolist()
 display_feature_importances(lgbm_ranker_model, feature_column_names, "LGBMRanker")
+# remove comment to display results (also follow instructions on 124, 57-64, 42-44)
+#x_test.sort_values(by=["srch_id"], inplace=True)
 
 if not TRAIN_WITHOUT_EVALUATION and y_test is not None:
     logger.info(f"Predicting on internal test set. x_test shape: {x_test.shape}")
@@ -115,6 +121,9 @@ if not TRAIN_WITHOUT_EVALUATION and y_test is not None:
     
     predictions_on_test_set = lgbm_ranker_model.predict(x_test_for_predict)
 
+    # remove comment to display results (also follow instructions on 112, 57-64, 42-44)
+    #print_pos_and_pred(predictions_on_test_set, for_comparison, 30)
+   
     model_rmse = np.sqrt(np.mean((predictions_on_test_set - y_test)**2))
     print(f"LGBMRanker model RMSE on internal test set: {model_rmse}")
     
@@ -137,8 +146,8 @@ if not TRAIN_WITHOUT_EVALUATION and y_test is not None:
 
 
 logger.info("Preparing Kaggle test set for final prediction")
-print(X.columns)
-print(x_test_kaggle.columns)
+# print(X.columns)
+# print(x_test_kaggle.columns)
 df_test_submission_features = x_test_kaggle[X.columns.intersection(x_test_kaggle.columns)]
 
 if 'srch_id' not in df_test_submission_features.columns:
