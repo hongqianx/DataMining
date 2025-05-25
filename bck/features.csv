@@ -1,0 +1,73 @@
+feature,not in test data,data type,explain,missing cnt,imputation,uni cnt,true cnt,outlier,use as feature
+srch_id,,Integer->str,,,,199795,,no outliers,no
+prop_id,,Integer->str,The ID of the hotel,,,129113,,,no
+date_time,,Date/time, Date and time of the search,,,,,"no outliers, range [2012-11-01 00:08:29, 2013-06-30 23:58:24]",no
+month,,,,,,,,,"transfer from 'date_time', but useless"
+dayofweek,,,,,,,,,"transfer from 'date_time', but useless"
+site_id,,Integer->str," ID of the Expedia point of sale (i.e. Expedia.com, Expedia.co.uk, Expedia.co.jp, ..)",,,34,,no outliers,
+visitor_location_country_id,,Integer->str,The ID of the country the customer is located,,,210,,no outliers,
+prop_country_id,,Integer->str,The ID of the country the hotel is located in,,,172,,,
+domestic_travel_bool,,,,,,,,,Domestic or foreign travel ? visitor_location_country_id=prop_country_id
+visitor_hist_starrating,,Float, The mean star rating of hotels the customer has previously purchased; null signifies there is no purchase history on the customer,4706481,median,,,"no outliers, (1,5)",
+prop_starrating,,Integer,"The star rating of the hotel, from 1 to 5, in increments of 1. A 0 indicates the property has no
+stars, the star rating is not known or cannot be publicized",,,,,"no outliers, [0,1,2,3,4,5]","0 does not mean lower than 1, so treat 0 as a new feature"
+history_starrating_diff,,,,,,,,,"data[""visitor_hist_starrating""] - data[""prop_starrating""]"
+visitor_hist_adr_usd,,Float,The mean price per night (in US$) of the hotels the customer has previously purchased; null signifies there is no purchase history on the customer,4705359,median,,,Log Transformation,no
+visitor_hist_adr_usd_log,,,,,,,,,transfer from 'visitor_hist_adr_usd'
+price_usd,,,Displayed price of the hotel for the given search,,,,,price_usd -> price / room * night -> delete value >=150000 -> log transform,no
+price_1room_1night_log,,,,,,,,,transfer from 'price_usd'
+history_adr_diff,,,,,,,,,"data[""visitor_hist_adr_usd""] - data[""price_1room_1night""]"
+prop_log_historical_price,,,The logarithm of the mean price of the hotel over the last trading period. A 0 will occur if the hotel was not sold in that period,,,,,"no outliers, 0-14%, (0,6.21)",
+price_history_difference,,,,,,,,,"data[""prop_log_historical_price""] - data[""price_1room_1night_log""]"
+prop_review_score,,,"The mean customer review score for the hotel on a scale out of 5, rounded to 0.5 increments.
+A 0 means there have been no reviews, null that the information is not available",7364,0,,,"no outliers, [null,0,0.5,1,...4.5,5]",
+prop_brand_bool,,Integer,1 if the hotel is part of a major hotel chain; 0 if it is an independent hotel,,,,,"no outliers, 1-63.5%, 0-36.5%",
+prop_location_score1,,,A (first) score outlining the desirability of a hotel location,,,,,"no outliers, (0,6,98)",
+prop_location_score2,,,A (second) score outlining the desirability of the hotel location,1090348,0,,,"no outliers, (0,1)",how to use it?
+promotion_flag,,Integer,,,,,21.60%,,
+srch_destination_id,,Integer->str, ID of the destination where the hotel search was performed,,,18127,,,no
+srch_length_of_stay,,Integer,,,,,,"(1,57)",
+srch_booking_window,,Integer, Number of days in the future the hotel stay started from the search date,,,,,"(0,492)",
+srch_adults_count,,Integer,,,,,,"(1,9)",
+srch_children_count,,Integer,,,,,,"(0,9)",
+srch_room_count,,Integer,Number of hotel rooms specified in the search,,,,,"(1,8)",
+srch_saturday_night_bool,,Boolean,"1 if the stay includes a Saturday night, starts from Thursday with a length of stay is less than
+or equal to 4 nights (i.e. weekend); otherwise 0",,,,50.20%,,
+srch_query_affinity_score,,,"The log of the probability a hotel will be clicked on in Internet searches (hence the values are
+negative) A null signifies there are no data (i.e. hotel did not register in any searches)",4640941,min,,,,
+orig_destination_distance,,,"Physical distance between the hotel and the customer at the time of search. A null means
+the distance could not be calculated",1607782,median,,,,
+random_bool,,Boolean,"1 when the displayed sort was random, 0 when the normal sort order was displayed",,,,29.60%,,
+comp1_rate,,Integer,1 if Expedia has a lower price than competitor 1 for the hotel; 0 if the same; -1 if Expedia__ price is higher than competitor 1; null signifies there is no competitive data,>50%,median,,,,
+comp1_inv,,Integer,"1 if competitor 1 does not have availability in the hotel; 0 if both Expedia and competitor 1
+have availability; null signifies there is no competitive data",>50%,median,,,,
+comp1_rate_percent_diff,,,"The absolute percentage difference (if one exists) between Expedia and competitor 1__ price
+(Expedia__ price the denominator); null signifies there is no competitive data",>50%,median,,,,
+comp2_rate,,Integer,,>50%,median,,,,
+comp2_inv,,Integer,,>50%,median,,,,
+comp2_rate_percent_diff,,,,>50%,median,,,,
+comp3_rate,,Integer,,>50%,median,,,,
+comp3_inv,,Integer,,>50%,median,,,,
+comp3_rate_percent_diff,,,,>50%,median,,,,
+comp4_rate,,Integer,,>50%,median,,,,
+comp4_inv,,Integer,,>50%,median,,,,
+comp4_rate_percent_diff,,,,>50%,median,,,,
+comp5_rate,,Integer,,>50%,median,,,,
+comp5_inv,,Integer,,>50%,median,,,,
+comp5_rate_percent_diff,,,,>50%,median,,,,
+comp6_rate,,Integer,,>50%,median,,,,
+comp6_inv,,Integer,,>50%,median,,,,
+comp6_rate_percent_diff,,,,>50%,median,,,,
+comp7_rate,,Integer,,>50%,median,,,,
+comp7_inv,,Integer,,>50%,median,,,,
+comp7_rate_percent_diff,,,,>50%,median,,,,
+comp8_rate,,Integer,,>50%,median,,,,
+comp8_inv,,Integer,,>50%,median,,,,
+comp8_rate_percent_diff,,,,>50%,median,,,,
+avg_comp_rate,,,,,,,,,sum(comp)
+avg_comp_inv,,,,,,,,,sum(comp)
+avg_comp_rate_percent_diff,,,,,,,,,median(comp)
+click_bool,1,Boolean,,,,,4.50%,,
+gross_bookings_usd,1,,Total value of the transaction. This can differ from the price_usd ,4819957,,,,,
+booking_bool,1,Boolean,,,,,2.80%,,
+position,1,,,,,,,,
