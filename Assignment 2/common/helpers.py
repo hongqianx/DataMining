@@ -88,3 +88,24 @@ def create_book_feature(df):
     df['book_feature'] = np.select(conditions, choices, default=0)
     df.drop(columns=['booking_bool', 'click_bool'], inplace=True, errors='ignore')
     return df
+
+def resampling_bias_mitigation(data):
+    # Split the dataset
+    chain_hotels = data[data['prop_brand_bool'] == 1]
+    ind_hotels = data[data['prop_brand_bool'] == 0]
+
+    # Calculate how many independent rows are needed to match target ratio
+    n_needed = len(chain_hotels) - len(ind_hotels)
+
+    # Bootstrap (resample with replacement)
+    ind_hotels_bootstrapped = resample(
+        ind_hotels,
+        replace=True,
+        n_samples=n_needed,
+        random_state=42
+    )
+
+    # Concatenate original data with bootstrapped independents
+    df_balanced = pd.concat([data, ind_hotels_bootstrapped])
+
+    return df_balanced
